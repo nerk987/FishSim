@@ -5,6 +5,10 @@ This addon aims to make it easier to animate natural movements of fish by allowi
 
 In the real world, fish often come in large numbers. There is already an impressive addon called Crowdmaster which is designed to move large numbers of objects according to complex stategies.  It's very well suited to setup an initial pattern for a school of fish and then animate the motion according to flocking, path following, object avoiding rules. In fact, it could handle the whole task including specifying armature actions to simulate swimming but the actions would end up somewhat robotic. Instead, it can be used to drive the motion of the targets, and the FishSim addon can then be used to produce realistic swimming physics for the 'actors' to follow the targets. An example crowdmaster setup suitable for this addon is provided. The 'animation nodes' addon is an alternative.
 
+# Download
+
+Addon file:  [FishSim.py](FishSim.py)
+
 # Workflow summary
 * Create or download a fish model
 * Use the Rigify Shark metarig to rig the model (or download one of the example models)
@@ -41,7 +45,7 @@ The FishSim add-on doesn't need Rigify to be installed to work, but it does expe
 ## FishSim Tools Panel
 Once FishSim is loaded and enabled, a panel should appear on the Tool Panel on the left of a 3D view if an armature is slected in Pose or Object mode. 
 
-![FishSim Tool Panel](https://github.com/nerk987/FishSim/blob/develop/images/FSim_ToolPanel.png)
+![FishSim Tool Panel](images/FSim_ToolPanel.png)
 
 1. Animation Range
 
