@@ -21,9 +21,9 @@
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (1, 1, 0),
+    "version": (1, 0, 0),
     "blender": (2, 78, 0),
-    "location": "Toolshelf>Tools Tab>FishSim",
+    "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",
     "wiki_url": "",
@@ -99,6 +99,10 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bpy.ops.object.scale_clear
         bound_box.name = TargetRoot["TargetProxy"]
         bound_box.draw_type = 'WIRE'
+        bound_box.hide_render = True
+        bound_box.cycles_visibility.camera = False
+        bound_box.cycles_visibility.diffuse = False
+        bound_box.cycles_visibility.shadow = False
         bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
         if "FSim" in bound_box:
             print("FSim Found")
@@ -552,7 +556,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
 class ARMATURE_PT_FSim(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
-    bl_label = "FSim"
+    bl_label = "FishSim"
     bl_idname = "armature.fsim"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -573,8 +577,8 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         scene = context.scene
         # row = layout.row()
         # row.label(text="Active object is: " + obj1.name)
-        row = layout.row()
-        row.prop(obj1, "name")
+        #row = layout.row()
+        #row.prop(obj1, "name")
         row = layout.row()
         row.label("Animation Range")
         row = layout.row()
