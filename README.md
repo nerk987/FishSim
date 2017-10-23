@@ -41,7 +41,7 @@ The FishSim add-on doesn't need Rigify to be installed to work, but it does expe
 ## FishSim Tools Panel
 Once FishSim is loaded and enabled, a panel should appear on the Tool Panel on the left of a 3D view if an armature is slected in Pose or Object mode. 
 
-![alt text](file:///F:/Bentley%20Software/Addons/FishSim/FSim_ToolPanel.png "Tools Panel")
+![Tool Panel](images/FSim_ToolPanel.png)
 
 1. Animation Range
 
