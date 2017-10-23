@@ -5,10 +5,6 @@ This addon aims to make it easier to animate natural movements of fish by allowi
 
 In the real world, fish often come in large numbers. There is already an impressive addon called Crowdmaster which is designed to move large numbers of objects according to complex stategies.  It's very well suited to setup an initial pattern for a school of fish and then animate the motion according to flocking, path following, object avoiding rules. In fact, it could handle the whole task including specifying armature actions to simulate swimming but the actions would end up somewhat robotic. Instead, it can be used to drive the motion of the targets, and the FishSim addon can then be used to produce realistic swimming physics for the 'actors' to follow the targets. An example crowdmaster setup suitable for this addon is provided. The 'animation nodes' addon is an alternative.
 
-# Download
-
-Addon file:  [FishSim.py](FishSim.py)
-
 # Workflow summary
 * Create or download a fish model
 * Use the Rigify Shark metarig to rig the model (or download one of the example models)
@@ -45,7 +41,7 @@ The FishSim add-on doesn't need Rigify to be installed to work, but it does expe
 ## FishSim Tools Panel
 Once FishSim is loaded and enabled, a panel should appear on the Tool Panel on the left of a 3D view if an armature is slected in Pose or Object mode. 
 
-![FishSim Tool Panel](images/FSim_ToolPanel.png)
+![alt text](file:///F:/Bentley%20Software/Addons/FishSim/FSim_ToolPanel.png "Tools Panel")
 
 1. Animation Range
 
@@ -55,7 +51,21 @@ Once FishSim is loaded and enabled, a panel should appear on the Tool Panel on t
 
 >The 'Add a Target' button will add a 'Target Proxy' object set to the bounding box size of the armature, and with wire frame display enabled. The idea then is to animate the motion of the Target Proxy, and then the fish armature can be automatically simulated to follow the target. 
 
->A 'custom property' is added to the root bone of the fish armature so that the fish knows which target to follow. The Target Proxy also gets a custom property to identify it, and this tag includes the first three letters of the rig - we'll mention this later as it helps when you have different types of fish.  
+>A 'custom property' is added to the root bone of the fish armature so that the fish knows which target to follow. The Target Proxy also gets a custom property to identify it, and this tag includes the first three letters of the rig - we'll mention this later as it helps when you have different types of fish.
+
+3. Simulate
+
+>The action of the Simulate button depends on the options selected in the 'Multi Sim Options' panel. By default, none of the options are selected, and the Simulate function will animate various bones within the rig and add a keyframe for each frame in the animation range. The animation trys to make the rig swim in a realistic way to keep pace with the target animation, according to a number of parameters which can be adjusted in the operator re-do panel.
+
+4. Multi Sim Options
+
+>
+>4.1. Distribute Multiple Copies of the Rig
+
+>
+
+
+ 
 
 
 
