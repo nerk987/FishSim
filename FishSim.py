@@ -85,6 +85,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         TargetRoot = TargetRig.pose.bones.get("root")
         if (TargetRoot is None):
             print("No root bone in Armature")
+            self.report({'ERROR'}, "No root bone in Armature - this addon needs a Rigify rig generated from a Shark Metarig")
             return {'CANCELLED'}
 
         TargetRoot["TargetProxy"] = TargetRig.name + '_proxy'
@@ -94,9 +95,9 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box = bpy.context.active_object
         #copy transforms
         bound_box.dimensions = TargetRig.dimensions
+        bpy.ops.object.transform_apply(scale=True)
         bound_box.location = TargetRig.location
         bound_box.rotation_euler = TargetRig.rotation_euler
-        bpy.ops.object.scale_clear
         bound_box.name = TargetRoot["TargetProxy"]
         bound_box.draw_type = 'WIRE'
         bound_box.hide_render = True
@@ -104,8 +105,8 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box.cycles_visibility.diffuse = False
         bound_box.cycles_visibility.shadow = False
         bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
-        if "FSim" in bound_box:
-            print("FSim Found")
+        # if "FSim" in bound_box:
+            # print("FSim Found")
         bound_box.select = False
         #context.active_pose_bone = TargetRoot
         
@@ -156,7 +157,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     def CopyChildren(self, scene, src_obj, new_obj):
         for childObj in src_obj.children:
-            print("Copying child: ", childObj.name)
+            #print("Copying child: ", childObj.name)
             new_child = childObj.copy()
             new_child.data = childObj.data.copy()
             new_child.animation_data_clear()
@@ -170,7 +171,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     
     def CopyRigs(self, context):
-        print("Populate")
+        #print("Populate")
         
         scene = context.scene
         src_obj = context.object
@@ -188,9 +189,6 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         proxyName = root['TargetProxy']
                         if len(proxyName) > 1:
                             armatures[proxyName] = obj.name
-        #make a list of objects with armature modifiers pointing to the list of armatures
-        
-        #make a list of objects parented to the armature
         
         #for each target...
         obj_count = 0
@@ -203,11 +201,11 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 
                 #Go back to the first frame to make sure the rigs are placed correctly
                 scene.frame_set(scene.fsim_start_frame)
-                scene.update()
+                # scene.update()
                 
                 #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
                 if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
-                    print("time to duplicate")
+                    # print("time to duplicate")
 
                     if scene.fsim_copyrigs:
                         #If there is not already a matching armature, duplicate the template and update the link field
@@ -219,6 +217,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         new_obj.rotation_euler = obj.rotation_euler
                         new_root = new_obj.pose.bones.get('root')
                         new_root['TargetProxy'] = obj.name
+                        new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
                         scene.objects.active = new_obj
                         new_obj.select = True
                         src_obj.select = False
@@ -231,7 +230,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
                 #If there's already a matching rig, then just update it
                 elif obj["FSim"][-3:] == src_obj.name[:3]:
-                    print("matching armature", armatures[obj.name])
+                    # print("matching armature", armatures[obj.name])
                     TargRig = scene.objects.get(armatures[obj.name])
                     if TargRig is not None:
                         #reposition if required
@@ -240,7 +239,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                             TargRig.location = obj.location
                             TargRig.rotation_euler = obj.rotation_euler
                             TargRig.rotation_euler.z += math.radians(scene.fsim_startangle)
-                            print("frame, rig: ", obj.location, TargRig.location)
+                            # print("frame, rig: ", obj.location, TargRig.location)
                         
                         #if no children, and the 'copymesh' flag set, then copy the associated meshes
                         if scene.fsim_copymesh and len(TargRig.children) < 1:
@@ -374,7 +373,8 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         SideFinL = TargetRig.pose.bones.get("side_fin.L")
         SideFinR = TargetRig.pose.bones.get("side_fin.R")
         if (spine_master is None) or (torso is None) or (chest is None) or (back_fin1 is None) or (back_fin2 is None) or (back_fin_middle is None) or (SideFinL is None) or (SideFinR is None):
-            print("Not an Suitable Rigify Armature", context.object.type)
+            self.report({'ERROR'}, "Sorry, this addon needs a Rigify rig generated from a Shark Metarig")
+            print("Not an Suitable Rigify Armature")
             return 0,0
             
         #initialise state variabiles
@@ -441,7 +441,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 )
             chest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             torso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-            scene.update()
+            # scene.update()
 
             
             #Tail Movment
@@ -478,7 +478,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 back_fin1_scale = -pMaxTailScale + 1
             back_fin1.scale[1] = back_fin1_scale
             back_fin2.scale[1] = 1 - (1 - back_fin1_scale) * self.pTailFinStubRatio
-            scene.update()
+            # scene.update()
             #print("New Scale:", back_fin1.scale[1])
             back_fin1.keyframe_insert(data_path='scale',  frame=(nFrame))
             back_fin2.keyframe_insert(data_path='scale',  frame=(nFrame))
