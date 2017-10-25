@@ -404,6 +404,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         rFact = self.pRandom
         rMaxTailAngle = self.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
         rMaxFreq = self.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
+        rTurnAssist = self.pTurnAssist * (1 + (random() * 2.0 - 1.0) * rFact)
 
         #simulate for each frame
         for nFrame in range(startFrame, endFrame):
@@ -525,7 +526,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             AngularForce += -xTailAngle * self.sVelocity / self.pAngularDrag
             
             #Fake Angular force to make turning more effective
-            AngularForce += -(self.sTailAngleOffset/self.pMaxSteeringAngle) * self.pTurnAssist
+            AngularForce += -(self.sTailAngleOffset/self.pMaxSteeringAngle) * rTurnAssist
             
             #Angular force for vertical movement
             AngularForceV = AngularForceV * (1 - self.pEffortRamp) + RqdDirectionV * self.pMaxVerticalAngle
