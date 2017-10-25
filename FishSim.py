@@ -135,7 +135,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
     pMass = FloatProperty(name="Mass", description="Total Mass", default=30.0, min=0, max=3000.0)
     pDrag = FloatProperty(name="Drag", description="Total Drag", default=8.0, min=0, max=3000.0)
     pPower = FloatProperty(name="Power", description="Forward force for given tail fin speed and angle", default=20.0, min=0)
-    pMaxFreq = FloatProperty(name="Maximum frequency", description="Maximum frequence of tail movement in frames per cycle", default=30.0)
+    pMaxFreq = FloatProperty(name="Min frames per beat", description="Maximum frequency of tail movement in frames per cycle", default=30.0)
     pEffortGain = FloatProperty(name="Effort Gain", description="The amount of effort required for a change in distance to target", default=0.5, min=0.0)
     pEffortIntegral = FloatProperty(name="Effort Integral", description="The amount of effort required for a continuing distance to target", default=0.5, min=0.0)
     pEffortRamp = FloatProperty(name="Effort Ramp", description="First Order factor for ramping up effort", default=0.2, min=0.0, max=0.6)
