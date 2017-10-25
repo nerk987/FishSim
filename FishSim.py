@@ -18,11 +18,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: progress bar
+# version comment: reorganise branch - floating properties
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (1, 0, 0),
+    "version": (0, 1, 0),
     "blender": (2, 78, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
@@ -36,6 +36,17 @@ import mathutils,  math, os
 from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, StringProperty
 from random import random
 
+class FSimMainProps(bpy.types.PropertyGroup):
+    fsim_start_frame = IntProperty(name="Simulation Start Frame", default=1)  
+    fsim_end_frame = IntProperty(name="Simulation End Frame", default=250)  
+    fsim_maxnum = IntProperty(name="Maximum number of copies", default=250)  
+    fsim_copyrigs = BoolProperty(name="Distribute multiple copies of the rig", default=False)  
+    fsim_copymesh = BoolProperty(name="Distribute multiple copies of meshes", default=False)  
+    fsim_multisim = BoolProperty(name="Simulate the multiple rigs", default=False)  
+    fsim_startangle = FloatProperty(name="Angle to Target", default=0.0)
+    
+
+
 def add_preset_files():
     presets   = bpy.utils.user_resource('SCRIPTS', "presets")
     mypresets = os.path.join(presets, "operator\\armature.fsim_run")
@@ -47,25 +58,14 @@ def add_preset_files():
     # fout     = open(mypath)
     
 
-def updateStartFrame(self, context):
-    start = context.scene.fsim_start_frame
-    end = context.scene.fsim_end_frame
-    if start >= end:
-        start = end
 
-def updateEndFrame(self, context):
-    start = context.scene.fsim_start_frame
-    end = context.scene.fsim_end_frame
-    if end <= start:
-        end = start
-
-bpy.types.Scene.fsim_start_frame = IntProperty(name="Simulation Start Frame", default=1, update=updateStartFrame)  
-bpy.types.Scene.fsim_end_frame = IntProperty(name="Simulation End Frame", default=250, update=updateEndFrame)  
-bpy.types.Scene.fsim_maxnum = IntProperty(name="Maximum number of copies", default=250)  
-bpy.types.Scene.fsim_copyrigs = BoolProperty(name="Distribute multiple copies of the rig", default=False)  
-bpy.types.Scene.fsim_copymesh = BoolProperty(name="Distribute multiple copies of meshes", default=False)  
-bpy.types.Scene.fsim_multisim = BoolProperty(name="Simulate the multiple rigs", default=False)  
-bpy.types.Scene.fsim_startangle = FloatProperty(name="Angle to Target", default=0.0)  
+# bpy.types.Scene.FSimMainProps.fsim_start_frame = IntProperty(name="Simulation Start Frame", default=1, update=updateStartFrame)  
+# bpy.types.Scene.FSimMainProps.fsim_end_frame = IntProperty(name="Simulation End Frame", default=250, update=updateEndFrame)  
+# bpy.types.Scene.FSimMainProps.fsim_maxnum = IntProperty(name="Maximum number of copies", default=250)  
+# bpy.types.Scene.FSimMainProps.fsim_copyrigs = BoolProperty(name="Distribute multiple copies of the rig", default=False)  
+# bpy.types.Scene.FSimMainProps.fsim_copymesh = BoolProperty(name="Distribute multiple copies of meshes", default=False)  
+# bpy.types.Scene.FSimMainProps.fsim_multisim = BoolProperty(name="Simulate the multiple rigs", default=False)  
+# bpy.types.Scene.FSimMainProps.fsim_startangle = FloatProperty(name="Angle to Target", default=0.0)  
 
 
 class ARMATURE_OT_FSim_Add(bpy.types.Operator):
@@ -106,8 +106,8 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box.cycles_visibility.diffuse = False
         bound_box.cycles_visibility.shadow = False
         bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
-        # if "FSim" in bound_box:
-            # print("FSim Found")
+        if "FSim" in bound_box:
+            print("FSim Found")
         bound_box.select = False
         #context.active_pose_bone = TargetRoot
         
@@ -158,7 +158,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     def CopyChildren(self, scene, src_obj, new_obj):
         for childObj in src_obj.children:
-            # print("Copying child: ", childObj.name)
+            print("Copying child: ", childObj.name)
             new_child = childObj.copy()
             new_child.data = childObj.data.copy()
             new_child.animation_data_clear()
@@ -172,7 +172,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     
     def CopyRigs(self, context):
-        # print("Populate")
+        print("Populate")
         
         scene = context.scene
         src_obj = context.object
@@ -196,19 +196,19 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         for obj in scene.objects:
             if "FSim" in obj and (obj["FSim"][-3:] == src_obj.name[:3]):
                 #Limit the maximum copy number
-                if obj_count >= scene.fsim_maxnum:
+                if obj_count >= scene.FSimMainProps.fsim_maxnum:
                     return  {'FINISHED'}
                 obj_count += 1
                 
                 #Go back to the first frame to make sure the rigs are placed correctly
-                scene.frame_set(scene.fsim_start_frame)
-                # scene.update()
+                scene.frame_set(scene.FSimMainProps.fsim_start_frame)
+                scene.update()
                 
                 #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
                 if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
-                    # print("time to duplicate")
+                    print("time to duplicate")
 
-                    if scene.fsim_copyrigs:
+                    if scene.FSimMainProps.fsim_copyrigs:
                         #If there is not already a matching armature, duplicate the template and update the link field
                         new_obj = src_obj.copy()
                         new_obj.data = src_obj.data.copy()
@@ -222,28 +222,28 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         scene.objects.active = new_obj
                         new_obj.select = True
                         src_obj.select = False
-                        if scene.fsim_multisim and new_obj.name != src_obj.name:
-                            self.BoneMovement(new_obj, scene.fsim_start_frame, scene.fsim_end_frame, context)
+                        if scene.FSimMainProps.fsim_multisim and new_obj.name != src_obj.name:
+                            self.BoneMovement(new_obj, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
                         
                         #if 'CopyMesh' is selected duplicate the dependents and re-link
-                        if scene.fsim_copymesh:
+                        if scene.FSimMainProps.fsim_copymesh:
                             self.CopyChildren(scene, src_obj, new_obj)
 
                 #If there's already a matching rig, then just update it
                 elif obj["FSim"][-3:] == src_obj.name[:3]:
-                    # print("matching armature", armatures[obj.name])
+                    print("matching armature", armatures[obj.name])
                     TargRig = scene.objects.get(armatures[obj.name])
                     if TargRig is not None:
                         #reposition if required
-                        if scene.fsim_multisim:
+                        if scene.FSimMainProps.fsim_multisim:
                             TargRig.animation_data_clear()
                             TargRig.location = obj.location
                             TargRig.rotation_euler = obj.rotation_euler
-                            TargRig.rotation_euler.z += math.radians(scene.fsim_startangle)
-                            # print("frame, rig: ", obj.location, TargRig.location)
+                            TargRig.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
+                            print("frame, rig: ", obj.location, TargRig.location)
                         
                         #if no children, and the 'copymesh' flag set, then copy the associated meshes
-                        if scene.fsim_copymesh and len(TargRig.children) < 1:
+                        if scene.FSimMainProps.fsim_copymesh and len(TargRig.children) < 1:
                             self.CopyChildren(scene, src_obj, TargRig)
                         
                         #Leave the just generated objects selected
@@ -256,8 +256,8 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                             childObj.select = False
 
                         #Animate
-                        if scene.fsim_multisim and TargRig.name != src_obj.name:
-                            self.BoneMovement(TargRig, scene.fsim_start_frame, scene.fsim_end_frame, context)
+                        if scene.FSimMainProps.fsim_multisim and TargRig.name != src_obj.name:
+                            self.BoneMovement(TargRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
                 
             
 
@@ -406,9 +406,6 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         rMaxTailAngle = self.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
         rMaxFreq = self.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
         
-        rTurnAssist = self.pTurnAssist * (1 + (random() * 2.0 - 1.0) * rFact)
-        
-        
         #Progress bar
         wm = context.window_manager
         wm.progress_begin(0.0,100.0)
@@ -449,8 +446,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             ChestRot = mathutils.Quaternion((0.0, 0.0, 1.0), -xTailAngle * self.pChestRatio - math.radians(self.sTailAngleOffset))
             chest.rotation_quaternion = ChestRot * mathutils.Quaternion((1.0, 0.0, 0.0), -math.fabs(math.radians(self.sTailAngleOffset))*self.pChestRaise)
             #print("Torso:", self.sTailAngleOffset)
-            torso.rotation_quaternion = mathutils.Quaternion((0.0, 1.0, 0.0), -math.radians(self.sTailAngleOffset)*self.pLeanIntoTurn
-)
+            torso.rotation_quaternion = mathutils.Quaternion((0.0, 1.0, 0.0), -math.radians(self.sTailAngleOffset)*self.pLeanIntoTurn)
             chest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             torso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             #context.scene.update()
@@ -537,7 +533,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             AngularForce += -xTailAngle * self.sVelocity / self.pAngularDrag
             
             #Fake Angular force to make turning more effective
-            AngularForce += -(self.sTailAngleOffset/self.pMaxSteeringAngle) * rTurnAssist
+            AngularForce += -(self.sTailAngleOffset/self.pMaxSteeringAngle) * self.pTurnAssist
             
             #Angular force for vertical movement
             AngularForceV = AngularForceV * (1 - self.pEffortRamp) + RqdDirectionV * self.pMaxVerticalAngle
@@ -555,10 +551,10 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             print("Not an Armature", context.object.type)
             return  {'FINISHED'}
        
-        if scene.fsim_copyrigs or scene.fsim_copymesh or scene.fsim_multisim:
+        if scene.FSimMainProps.fsim_copyrigs or scene.FSimMainProps.fsim_copymesh or scene.FSimMainProps.fsim_multisim:
             self.CopyRigs(context)
         else:
-            self.BoneMovement(TargetRig, scene.fsim_start_frame, scene.fsim_end_frame, context)   
+            self.BoneMovement(TargetRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)   
         
         return {'FINISHED'}
 
@@ -594,9 +590,9 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         row = layout.row()
         row.label("Animation Range")
         row = layout.row()
-        row.prop(scene, "fsim_start_frame")
+        row.prop(scene.FSimMainProps, "fsim_start_frame")
         row = layout.row()
-        row.prop(scene, "fsim_end_frame")
+        row.prop(scene.FSimMainProps, "fsim_end_frame")
         row = layout.row()
         row.operator("armature.fsim_add")
         row = layout.row()
@@ -605,22 +601,26 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         #row.operator("armature.fsim_populate")
         box = layout.box()
         box.label("Multi Sim Options")
-        box.prop(scene, "fsim_copyrigs")
-        box.prop(scene, "fsim_copymesh")
-        box.prop(scene, "fsim_multisim")
-        box.prop(scene, "fsim_maxnum")
-        box.prop(scene, "fsim_startangle")
+        box.prop(scene.FSimMainProps, "fsim_copyrigs")
+        box.prop(scene.FSimMainProps, "fsim_copymesh")
+        box.prop(scene.FSimMainProps, "fsim_multisim")
+        box.prop(scene.FSimMainProps, "fsim_maxnum")
+        box.prop(scene.FSimMainProps, "fsim_startangle")
 
         
 
 
 def register():
+    bpy.utils.register_class(FSimMainProps)
+    bpy.types.Scene.FSimMainProps = bpy.props.PointerProperty(type=FSimMainProps)
     bpy.utils.register_class(ARMATURE_OT_FSim_Add)
     bpy.utils.register_class(ARMATURE_OT_FSim_Run)
     bpy.utils.register_class(ARMATURE_PT_FSim)
 
 
 def unregister():
+    del bpy.types.Scene.FSimMainProps
+    bpy.utils.unregister_class(FSimMainProps)
     bpy.utils.unregister_class(ARMATURE_OT_FSim_Add)
     bpy.utils.unregister_class(ARMATURE_OT_FSim_Run)
     bpy.utils.unregister_class(ARMATURE_PT_FSim)
