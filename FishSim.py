@@ -18,6 +18,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
+# version comment: progress bar
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
@@ -157,7 +158,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     def CopyChildren(self, scene, src_obj, new_obj):
         for childObj in src_obj.children:
-            #print("Copying child: ", childObj.name)
+            # print("Copying child: ", childObj.name)
             new_child = childObj.copy()
             new_child.data = childObj.data.copy()
             new_child.animation_data_clear()
@@ -171,7 +172,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     
     def CopyRigs(self, context):
-        #print("Populate")
+        # print("Populate")
         
         scene = context.scene
         src_obj = context.object
@@ -182,7 +183,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         #make a list of armatures
         armatures = {}
         for obj in scene.objects:
-            if obj.type == "ARMATURE":
+            if obj.type == "ARMATURE" and obj.name[:3] == src_obj.name[:3]:
                 root = obj.pose.bones.get("root")
                 if root != None:
                     if 'TargetProxy' in root:
@@ -193,7 +194,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         #for each target...
         obj_count = 0
         for obj in scene.objects:
-            if "FSim" in obj:
+            if "FSim" in obj and (obj["FSim"][-3:] == src_obj.name[:3]):
                 #Limit the maximum copy number
                 if obj_count >= scene.fsim_maxnum:
                     return  {'FINISHED'}
@@ -221,8 +222,8 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         scene.objects.active = new_obj
                         new_obj.select = True
                         src_obj.select = False
-                        if scene.fsim_multisim:
-                            self.BoneMovement(new_obj, scene.fsim_start_frame, scene.fsim_end_frame, scene)
+                        if scene.fsim_multisim and new_obj.name != src_obj.name:
+                            self.BoneMovement(new_obj, scene.fsim_start_frame, scene.fsim_end_frame, context)
                         
                         #if 'CopyMesh' is selected duplicate the dependents and re-link
                         if scene.fsim_copymesh:
@@ -255,8 +256,8 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                             childObj.select = False
 
                         #Animate
-                        if scene.fsim_multisim:
-                            self.BoneMovement(TargRig, scene.fsim_start_frame, scene.fsim_end_frame, scene)
+                        if scene.fsim_multisim and TargRig.name != src_obj.name:
+                            self.BoneMovement(TargRig, scene.fsim_start_frame, scene.fsim_end_frame, context)
                 
             
 
@@ -360,7 +361,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         
         
 #Handle the movement of the bones within the armature        
-    def BoneMovement(self, TargetRig, startFrame, endFrame, scene):
+    def BoneMovement(self, TargetRig, startFrame, endFrame, context):
     
         #Check the required Rigify bones are present
         root = TargetRig.pose.bones.get("root")
@@ -389,7 +390,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             TargetProxy = None
 
         #Go back to the start before removing keyframes to remember starting point
-        scene.frame_set(startFrame)
+        context.scene.frame_set(startFrame)
        
         #Delete existing keyframes
         try:
@@ -398,17 +399,27 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             print("info: no keyframes")
         
         #record to previous tail position
-        scene.frame_set(startFrame)
+        context.scene.frame_set(startFrame)
         
         #randomise parameters
         rFact = self.pRandom
         rMaxTailAngle = self.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
         rMaxFreq = self.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
+        
         rTurnAssist = self.pTurnAssist * (1 + (random() * 2.0 - 1.0) * rFact)
+        
+        
+        #Progress bar
+        wm = context.window_manager
+        wm.progress_begin(0.0,100.0)
 
         #simulate for each frame
         for nFrame in range(startFrame, endFrame):
-            scene.frame_set(nFrame)
+            context.scene.frame_set(nFrame)
+            if nFrame == endFrame:
+                wm.progress_end()
+            else:
+                wm.progress_update((nFrame - startFrame)*100.0/(endFrame - startFrame))
             
             #Get the effort and direction change to head toward the target
             RqdEffort, RqdDirection, RqdDirectionV = self.Target(TargetRig, TargetProxy)
@@ -442,7 +453,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 )
             chest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             torso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-            # scene.update()
+            #context.scene.update()
 
             
             #Tail Movment
@@ -479,7 +490,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 back_fin1_scale = -pMaxTailScale + 1
             back_fin1.scale[1] = back_fin1_scale
             back_fin2.scale[1] = 1 - (1 - back_fin1_scale) * self.pTailFinStubRatio
-            # scene.update()
+            #scene.update()
             #print("New Scale:", back_fin1.scale[1])
             back_fin1.keyframe_insert(data_path='scale',  frame=(nFrame))
             back_fin2.keyframe_insert(data_path='scale',  frame=(nFrame))
@@ -510,7 +521,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 SideFinRot = -pMaxSideFinAngle
             SideFinL.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(-SideFinRot))
             SideFinR.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(SideFinRot))
-            scene.update()
+            #scene.update()
             SideFinL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             SideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             
@@ -547,7 +558,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         if scene.fsim_copyrigs or scene.fsim_copymesh or scene.fsim_multisim:
             self.CopyRigs(context)
         else:
-            self.BoneMovement(TargetRig, scene.fsim_start_frame, scene.fsim_end_frame, scene)   
+            self.BoneMovement(TargetRig, scene.fsim_start_frame, scene.fsim_end_frame, context)   
         
         return {'FINISHED'}
 
