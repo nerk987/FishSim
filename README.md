@@ -41,7 +41,7 @@ The FishSim add-on doesn't need Rigify to be installed to work, but it does expe
 ## FishSim Tools Panel
 Once FishSim is loaded and enabled, a panel should appear on the Tool Panel on the left of a 3D view if an armature is slected in Pose or Object mode. 
 
-![Tool Panel](images/FSim_ToolPanel.png)
+![Tools Panel](images/FSim_ToolPanel.png)
 
 1. Animation Range
 
@@ -59,11 +59,51 @@ Once FishSim is loaded and enabled, a panel should appear on the Tool Panel on t
 
 4. Multi Sim Options
 
->
 >4.1. Distribute Multiple Copies of the Rig
 
->
+>If this option is ticked, when the Simulate button is pressed the addon will search for every target in the scene that matches the currently selected armature. For each target, a copy of the currently selected armature will be copied to the targets location and rotation, and linked to follow that target. The armature root bone will be scaled to match the targets scale. If an armature is already linked to that target, it's position, rotation, and root bone scale is adjusted to match the target. All of the copied armatures are left selected to make them easier to delete or be moved to other layers.
 
+4.2. Distribute Multiple Copies of meshes.
+
+>If this option is ticked, when the Simulate button is pressed the addon will search for every target in the scene that matches the currently selected armature. For each target that has a linked armature, a copy of all the mesh children of the currently selected armature will be copied to the associated armature and linked.  All of the copied meahes are left selected to make them easier to delete or be moved to other layers.
+
+4.3. Simulate the Multiple Rigs
+
+>If this option is selected, when the Simulate button is pressed the addon will animate every armature that matches the currently selected rig by adding keyframes in the range specified by the start and end frame parameters. The fish will try to swim to it's associated target. It's up to you to animate the targets in a suitable way - manually, path follow, crowdmaster, animation nodes or a method of your choice. The swimming action of the fish will usually need to be tuned to match the target motion using the various simulation parameters in the operator re-do panel. 
+
+>Warning! This can take a long time, and (at least with this version of the addon) you can't cancel. It's recommended to start with only one armature with no mesh for a few hundred frames. once it's swimming ok, extend the frame range, and then the number of armatures. Once all the armatures are simulated, the associated meshes can be distributed.
+
+4.4. Maximum number of copies
+
+>The maximum number of armatures or meshes copied and/or simulated can be limited by this parameter to speed up testing times.
+
+4.5. Angle to target
+
+>I found that most of the Crowd Master examples moved the objects in the positive Y direction by default, and Rigify and most models face the negative Y direction. This parameter lets you add a rotation offset when the armatures are attached to the targets. If you find your models start swimming in the opposite direction to the target, put 180 in this parameter.
+
+5. Simulation Parameters
+
+>Paramaters affecting the swimming action of the fish can be found in the 'Re-Do' panel after running the simulation. They can be adjusted as required to allow the model to better follow the target.
+
+>There are a lot of parameters, but in most cases only a have to be changed. I would suggest you setup a single armature with a target animated to move at a steady speed. Run the simulation for say 100 frames. If the model lags behind the target, decrease the tail 'Stroke Period' (flap faster) and/or increase the 'Power' (more push per tail flap). If the model overshoots the target repeatedly, or loops in a 360, do the opposite. To make the model turn faster, increase the 'Turn Assist' parameter.
+
+>The 'Mass' and 'Drag' parameters can be adjusted to affect the stopping speed, and the steadiness of the movment.
+
+5.1. Simulation Prameter Reference
+
+* Mass
+
+>A higher value will make the motion steadier. A lower value will make cause the speed to pulse as the tail moves back and forwards.
+
+* Drag
+
+>A higher value will allow the fish to stop quicker and may cause the speed to pulse. A higher 'Power' will be needed to obtain the same top speed. A lower value will allow the fish to glide with little tail movement.
+
+* Power
+
+>Is the amount of forward force for a given tail movment. A higher value will give a higher top speed. A value too high or low will look unrealistic.
+
+ 
 
  
 
