@@ -31,6 +31,14 @@ bl_info = {
     "tracker_url": "",
     "category": "Animation"}
 
+if "bpy" in locals():
+    import imp
+    imp.reload(FishSim)
+    print("Reloaded multifiles")
+else:
+    from . import FishSim
+    print("Imported multifiles")
+
 import bpy
 import mathutils,  math, os
 from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, StringProperty
@@ -136,7 +144,7 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         #row = layout.row()
         #row.prop(obj1, "name")
         row = layout.row()
-        row.label("Animation Range")
+        row.label("Animation Ranges")
         row = layout.row()
         row.prop(scene.FSimMainProps, "fsim_start_frame")
         row = layout.row()
