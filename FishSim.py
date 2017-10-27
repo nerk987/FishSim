@@ -18,12 +18,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
+# version comment: Alpha Release
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (1, 1, 0),
+    "version": (0, 0, 1),
     "blender": (2, 78, 0),
-    "location": "Toolshelf>Tools Tab>FishSim",
+    "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",
     "wiki_url": "",
@@ -85,6 +86,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         TargetRoot = TargetRig.pose.bones.get("root")
         if (TargetRoot is None):
             print("No root bone in Armature")
+            self.report({'ERROR'}, "No root bone in Armature - this addon needs a Rigify rig generated from a Shark Metarig")
             return {'CANCELLED'}
 
         TargetRoot["TargetProxy"] = TargetRig.name + '_proxy'
@@ -94,14 +96,18 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box = bpy.context.active_object
         #copy transforms
         bound_box.dimensions = TargetRig.dimensions
+        bpy.ops.object.transform_apply(scale=True)
         bound_box.location = TargetRig.location
         bound_box.rotation_euler = TargetRig.rotation_euler
-        bpy.ops.object.scale_clear
         bound_box.name = TargetRoot["TargetProxy"]
         bound_box.draw_type = 'WIRE'
+        bound_box.hide_render = True
+        bound_box.cycles_visibility.camera = False
+        bound_box.cycles_visibility.diffuse = False
+        bound_box.cycles_visibility.shadow = False
         bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
-        if "FSim" in bound_box:
-            print("FSim Found")
+        # if "FSim" in bound_box:
+            # print("FSim Found")
         bound_box.select = False
         #context.active_pose_bone = TargetRoot
         
@@ -129,7 +135,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
     pMass = FloatProperty(name="Mass", description="Total Mass", default=30.0, min=0, max=3000.0)
     pDrag = FloatProperty(name="Drag", description="Total Drag", default=8.0, min=0, max=3000.0)
     pPower = FloatProperty(name="Power", description="Forward force for given tail fin speed and angle", default=20.0, min=0)
-    pMaxFreq = FloatProperty(name="Maximum frequency", description="Maximum frequence of tail movement in frames per cycle", default=30.0)
+    pMaxFreq = FloatProperty(name="Stroke Period", description="Maximum frequency of tail movement in frames per cycle", default=30.0)
     pEffortGain = FloatProperty(name="Effort Gain", description="The amount of effort required for a change in distance to target", default=0.5, min=0.0)
     pEffortIntegral = FloatProperty(name="Effort Integral", description="The amount of effort required for a continuing distance to target", default=0.5, min=0.0)
     pEffortRamp = FloatProperty(name="Effort Ramp", description="First Order factor for ramping up effort", default=0.2, min=0.0, max=0.6)
@@ -152,7 +158,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     def CopyChildren(self, scene, src_obj, new_obj):
         for childObj in src_obj.children:
-            print("Copying child: ", childObj.name)
+            # print("Copying child: ", childObj.name)
             new_child = childObj.copy()
             new_child.data = childObj.data.copy()
             new_child.animation_data_clear()
@@ -166,7 +172,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     
     def CopyRigs(self, context):
-        print("Populate")
+        # print("Populate")
         
         scene = context.scene
         src_obj = context.object
@@ -177,21 +183,18 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         #make a list of armatures
         armatures = {}
         for obj in scene.objects:
-            if obj.type == "ARMATURE":
+            if obj.type == "ARMATURE" and obj.name[:3] == src_obj.name[:3]:
                 root = obj.pose.bones.get("root")
                 if root != None:
                     if 'TargetProxy' in root:
                         proxyName = root['TargetProxy']
                         if len(proxyName) > 1:
                             armatures[proxyName] = obj.name
-        #make a list of objects with armature modifiers pointing to the list of armatures
-        
-        #make a list of objects parented to the armature
         
         #for each target...
         obj_count = 0
         for obj in scene.objects:
-            if "FSim" in obj:
+            if "FSim" in obj and (obj["FSim"][-3:] == src_obj.name[:3]):
                 #Limit the maximum copy number
                 if obj_count >= scene.fsim_maxnum:
                     return  {'FINISHED'}
@@ -199,11 +202,11 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 
                 #Go back to the first frame to make sure the rigs are placed correctly
                 scene.frame_set(scene.fsim_start_frame)
-                scene.update()
+                # scene.update()
                 
                 #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
                 if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
-                    print("time to duplicate")
+                    # print("time to duplicate")
 
                     if scene.fsim_copyrigs:
                         #If there is not already a matching armature, duplicate the template and update the link field
@@ -215,11 +218,12 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         new_obj.rotation_euler = obj.rotation_euler
                         new_root = new_obj.pose.bones.get('root')
                         new_root['TargetProxy'] = obj.name
+                        new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
                         scene.objects.active = new_obj
                         new_obj.select = True
                         src_obj.select = False
-                        if scene.fsim_multisim:
-                            self.BoneMovement(new_obj, scene.fsim_start_frame, scene.fsim_end_frame, scene)
+                        if scene.fsim_multisim and new_obj.name != src_obj.name:
+                            self.BoneMovement(new_obj, scene.fsim_start_frame, scene.fsim_end_frame, context)
                         
                         #if 'CopyMesh' is selected duplicate the dependents and re-link
                         if scene.fsim_copymesh:
@@ -227,7 +231,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
                 #If there's already a matching rig, then just update it
                 elif obj["FSim"][-3:] == src_obj.name[:3]:
-                    print("matching armature", armatures[obj.name])
+                    # print("matching armature", armatures[obj.name])
                     TargRig = scene.objects.get(armatures[obj.name])
                     if TargRig is not None:
                         #reposition if required
@@ -236,7 +240,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                             TargRig.location = obj.location
                             TargRig.rotation_euler = obj.rotation_euler
                             TargRig.rotation_euler.z += math.radians(scene.fsim_startangle)
-                            print("frame, rig: ", obj.location, TargRig.location)
+                            # print("frame, rig: ", obj.location, TargRig.location)
                         
                         #if no children, and the 'copymesh' flag set, then copy the associated meshes
                         if scene.fsim_copymesh and len(TargRig.children) < 1:
@@ -252,8 +256,8 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                             childObj.select = False
 
                         #Animate
-                        if scene.fsim_multisim:
-                            self.BoneMovement(TargRig, scene.fsim_start_frame, scene.fsim_end_frame, scene)
+                        if scene.fsim_multisim and TargRig.name != src_obj.name:
+                            self.BoneMovement(TargRig, scene.fsim_start_frame, scene.fsim_end_frame, context)
                 
             
 
@@ -357,7 +361,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         
         
 #Handle the movement of the bones within the armature        
-    def BoneMovement(self, TargetRig, startFrame, endFrame, scene):
+    def BoneMovement(self, TargetRig, startFrame, endFrame, context):
     
         #Check the required Rigify bones are present
         root = TargetRig.pose.bones.get("root")
@@ -370,7 +374,8 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         SideFinL = TargetRig.pose.bones.get("side_fin.L")
         SideFinR = TargetRig.pose.bones.get("side_fin.R")
         if (spine_master is None) or (torso is None) or (chest is None) or (back_fin1 is None) or (back_fin2 is None) or (back_fin_middle is None) or (SideFinL is None) or (SideFinR is None):
-            print("Not an Suitable Rigify Armature", context.object.type)
+            self.report({'ERROR'}, "Sorry, this addon needs a Rigify rig generated from a Shark Metarig")
+            print("Not an Suitable Rigify Armature")
             return 0,0
             
         #initialise state variabiles
@@ -385,7 +390,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             TargetProxy = None
 
         #Go back to the start before removing keyframes to remember starting point
-        scene.frame_set(startFrame)
+        context.scene.frame_set(startFrame)
        
         #Delete existing keyframes
         try:
@@ -394,16 +399,27 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             print("info: no keyframes")
         
         #record to previous tail position
-        scene.frame_set(startFrame)
+        context.scene.frame_set(startFrame)
         
         #randomise parameters
         rFact = self.pRandom
         rMaxTailAngle = self.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
         rMaxFreq = self.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
+        
+        rTurnAssist = self.pTurnAssist * (1 + (random() * 2.0 - 1.0) * rFact)
+        
+        
+        #Progress bar
+        wm = context.window_manager
+        wm.progress_begin(0.0,100.0)
 
         #simulate for each frame
         for nFrame in range(startFrame, endFrame):
-            scene.frame_set(nFrame)
+            context.scene.frame_set(nFrame)
+            if nFrame == endFrame:
+                wm.progress_end()
+            else:
+                wm.progress_update((nFrame - startFrame)*100.0/(endFrame - startFrame))
             
             #Get the effort and direction change to head toward the target
             RqdEffort, RqdDirection, RqdDirectionV = self.Target(TargetRig, TargetProxy)
@@ -437,7 +453,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 )
             chest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             torso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-            scene.update()
+            #context.scene.update()
 
             
             #Tail Movment
@@ -474,7 +490,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 back_fin1_scale = -pMaxTailScale + 1
             back_fin1.scale[1] = back_fin1_scale
             back_fin2.scale[1] = 1 - (1 - back_fin1_scale) * self.pTailFinStubRatio
-            scene.update()
+            #scene.update()
             #print("New Scale:", back_fin1.scale[1])
             back_fin1.keyframe_insert(data_path='scale',  frame=(nFrame))
             back_fin2.keyframe_insert(data_path='scale',  frame=(nFrame))
@@ -505,7 +521,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 SideFinRot = -pMaxSideFinAngle
             SideFinL.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(-SideFinRot))
             SideFinR.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(SideFinRot))
-            scene.update()
+            #scene.update()
             SideFinL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             SideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             
@@ -521,7 +537,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             AngularForce += -xTailAngle * self.sVelocity / self.pAngularDrag
             
             #Fake Angular force to make turning more effective
-            AngularForce += -(self.sTailAngleOffset/self.pMaxSteeringAngle) * self.pTurnAssist
+            AngularForce += -(self.sTailAngleOffset/self.pMaxSteeringAngle) * rTurnAssist
             
             #Angular force for vertical movement
             AngularForceV = AngularForceV * (1 - self.pEffortRamp) + RqdDirectionV * self.pMaxVerticalAngle
@@ -542,7 +558,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         if scene.fsim_copyrigs or scene.fsim_copymesh or scene.fsim_multisim:
             self.CopyRigs(context)
         else:
-            self.BoneMovement(TargetRig, scene.fsim_start_frame, scene.fsim_end_frame, scene)   
+            self.BoneMovement(TargetRig, scene.fsim_start_frame, scene.fsim_end_frame, context)   
         
         return {'FINISHED'}
 
@@ -552,7 +568,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
 class ARMATURE_PT_FSim(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
-    bl_label = "FSim"
+    bl_label = "FishSim"
     bl_idname = "armature.fsim"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -573,8 +589,8 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         scene = context.scene
         # row = layout.row()
         # row.label(text="Active object is: " + obj1.name)
-        row = layout.row()
-        row.prop(obj1, "name")
+        #row = layout.row()
+        #row.prop(obj1, "name")
         row = layout.row()
         row.label("Animation Range")
         row = layout.row()
