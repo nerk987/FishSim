@@ -18,11 +18,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: progress bar
+# version comment: Alpha Release
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (1, 0, 0),
+    "version": (0, 0, 1),
     "blender": (2, 78, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
