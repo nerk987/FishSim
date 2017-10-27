@@ -1,6 +1,6 @@
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
-#  fishsim.py  -- a script to apply a fish swimming simulation to an armature
+#  FishSim  -- a script to apply a fish swimming simulation to an armature
 #  by Ian Huish (nerk)
 #
 #  This program is free software; you can redistribute it and/or
@@ -18,23 +18,16 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: Alpha Release
-bl_info = {
-    "name": "FishSim",
-    "author": "Ian Huish (nerk)",
-    "version": (0, 0, 1),
-    "blender": (2, 78, 0),
-    "location": "Toolshelf>FishSim",
-    "description": "Apply fish swimming action to a Rigify Shark armature",
-    "warning": "",
-    "wiki_url": "",
-    "tracker_url": "",
-    "category": "Animation"}
+
+# version comment: reorganise branch - first split
 
 import bpy
 import mathutils,  math, os
 from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, StringProperty
 from random import random
+
+
+
 
 def add_preset_files():
     presets   = bpy.utils.user_resource('SCRIPTS', "presets")
@@ -44,83 +37,7 @@ def add_preset_files():
         print("Presets dir added:", mypresets)
     mypath = os.path.join(mypresets, "myfile.xxx")
 
-    # fout     = open(mypath)
-    
-
-def updateStartFrame(self, context):
-    start = context.scene.fsim_start_frame
-    end = context.scene.fsim_end_frame
-    if start >= end:
-        start = end
-
-def updateEndFrame(self, context):
-    start = context.scene.fsim_start_frame
-    end = context.scene.fsim_end_frame
-    if end <= start:
-        end = start
-
-bpy.types.Scene.fsim_start_frame = IntProperty(name="Simulation Start Frame", default=1, update=updateStartFrame)  
-bpy.types.Scene.fsim_end_frame = IntProperty(name="Simulation End Frame", default=250, update=updateEndFrame)  
-bpy.types.Scene.fsim_maxnum = IntProperty(name="Maximum number of copies", default=250)  
-bpy.types.Scene.fsim_copyrigs = BoolProperty(name="Distribute multiple copies of the rig", default=False)  
-bpy.types.Scene.fsim_copymesh = BoolProperty(name="Distribute multiple copies of meshes", default=False)  
-bpy.types.Scene.fsim_multisim = BoolProperty(name="Simulate the multiple rigs", default=False)  
-bpy.types.Scene.fsim_startangle = FloatProperty(name="Angle to Target", default=0.0)  
-
-
-class ARMATURE_OT_FSim_Add(bpy.types.Operator):
-    """Add a target object for the simulated fish to follow"""
-    bl_label = "Add a target"
-    bl_idname = "armature.fsim_add"
-    bl_options = {'REGISTER', 'UNDO'}
-    
-
-
-    def execute(self, context):
-        #Get the object
-        TargetRig = context.object
-        if TargetRig.type != "ARMATURE":
-            print("Not an Armature", context.object.type)
-            return {'CANCELLED'}
-       
-        TargetRoot = TargetRig.pose.bones.get("root")
-        if (TargetRoot is None):
-            print("No root bone in Armature")
-            self.report({'ERROR'}, "No root bone in Armature - this addon needs a Rigify rig generated from a Shark Metarig")
-            return {'CANCELLED'}
-
-        TargetRoot["TargetProxy"] = TargetRig.name + '_proxy'
-            
-        #Add the proxy object
-        bpy.ops.mesh.primitive_cube_add()
-        bound_box = bpy.context.active_object
-        #copy transforms
-        bound_box.dimensions = TargetRig.dimensions
-        bpy.ops.object.transform_apply(scale=True)
-        bound_box.location = TargetRig.location
-        bound_box.rotation_euler = TargetRig.rotation_euler
-        bound_box.name = TargetRoot["TargetProxy"]
-        bound_box.draw_type = 'WIRE'
-        bound_box.hide_render = True
-        bound_box.cycles_visibility.camera = False
-        bound_box.cycles_visibility.diffuse = False
-        bound_box.cycles_visibility.shadow = False
-        bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
-        # if "FSim" in bound_box:
-            # print("FSim Found")
-        bound_box.select = False
-        #context.active_pose_bone = TargetRoot
-        
-        return {'FINISHED'}
-
-class ARMATURE_OT_FSim_Run(bpy.types.Operator):
-    """Simulate and add keyframes for the armature to make it swim towards the target"""
-    bl_label = "Simulate"
-    bl_idname = "armature.fsim_run"
-    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    
-    add_preset_files()
-
+class FSimProps(bpy.types.PropertyGroup):
     
     #State Variables
     sVelocity = FloatProperty(name="Velocity", description="Speed", default=0.0, min=0)
@@ -156,111 +73,50 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
     pLeanIntoTurn = FloatProperty(name="LeanIntoTurn", description="Amount it leans into the turns", default=1.0, min=0, max=20.0)
     pRandom = FloatProperty(name="Random", description="Random amount", default=0.25, min=0, max=1.0)
 
-    def CopyChildren(self, scene, src_obj, new_obj):
-        for childObj in src_obj.children:
-            # print("Copying child: ", childObj.name)
-            new_child = childObj.copy()
-            new_child.data = childObj.data.copy()
-            new_child.animation_data_clear()
-            new_child.location = childObj.location - src_obj.location
-            new_child.parent = new_obj
-            scene.objects.link(new_child)
-            new_child.select = True
-            for mod in new_child.modifiers:
-                if mod.type == "ARMATURE":
-                    mod.object = new_obj
-
     
-    def CopyRigs(self, context):
-        # print("Populate")
-        
-        scene = context.scene
-        src_obj = context.object
-        if src_obj.type != 'ARMATURE':
-            return {'CANCELLED'}
-        src_obj.select = False
-        
-        #make a list of armatures
-        armatures = {}
+    
+    
+class ARMATURE_OT_FSimulate(bpy.types.Operator):
+    """Simulate all armatures with a similar name to selected"""
+    bl_idname = "armature.fsimulate"
+    bl_label = "Simulate"
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
+    
+    add_preset_files()
+
+    _timer = None
+    sRoot = None
+    sTorso = None
+    sSpine_master = None
+    sBack_fin1 = None
+    sBack_fin2 = None
+    sBack_fin_middle = None
+    sChest = None
+    sSideFinL = None
+    sSideFinR = None
+    sState = 0.0
+    sAngularForceV = 0.0
+    sTargetProxy = None
+    rMaxTailAngle = 0.0
+    rMaxFreq = 0.0
+    sTargetRig = None
+    sOldRqdEffort = 0.0
+    sOld_back_fin = None
+    sArmatures = []
+    nArmature = 0
+    
+    def armature_list(self, scene, sFPM):
+        self.sArmatures = []
         for obj in scene.objects:
-            if obj.type == "ARMATURE" and obj.name[:3] == src_obj.name[:3]:
+            if obj.type == "ARMATURE" and obj.name[:3] == self.sTargetRig.name[:3]:
                 root = obj.pose.bones.get("root")
                 if root != None:
                     if 'TargetProxy' in root:
-                        proxyName = root['TargetProxy']
-                        if len(proxyName) > 1:
-                            armatures[proxyName] = obj.name
-        
-        #for each target...
-        obj_count = 0
-        for obj in scene.objects:
-            if "FSim" in obj and (obj["FSim"][-3:] == src_obj.name[:3]):
-                #Limit the maximum copy number
-                if obj_count >= scene.fsim_maxnum:
-                    return  {'FINISHED'}
-                obj_count += 1
-                
-                #Go back to the first frame to make sure the rigs are placed correctly
-                scene.frame_set(scene.fsim_start_frame)
-                # scene.update()
-                
-                #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
-                if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
-                    # print("time to duplicate")
+                        self.sArmatures.append(obj.name)
+        self.nArmature = len(self.sArmatures) - 1
+        print("List: ", self.sArmatures)
 
-                    if scene.fsim_copyrigs:
-                        #If there is not already a matching armature, duplicate the template and update the link field
-                        new_obj = src_obj.copy()
-                        new_obj.data = src_obj.data.copy()
-                        new_obj.animation_data_clear()
-                        scene.objects.link(new_obj)
-                        new_obj.location = obj.location
-                        new_obj.rotation_euler = obj.rotation_euler
-                        new_root = new_obj.pose.bones.get('root')
-                        new_root['TargetProxy'] = obj.name
-                        new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
-                        scene.objects.active = new_obj
-                        new_obj.select = True
-                        src_obj.select = False
-                        if scene.fsim_multisim and new_obj.name != src_obj.name:
-                            self.BoneMovement(new_obj, scene.fsim_start_frame, scene.fsim_end_frame, context)
-                        
-                        #if 'CopyMesh' is selected duplicate the dependents and re-link
-                        if scene.fsim_copymesh:
-                            self.CopyChildren(scene, src_obj, new_obj)
-
-                #If there's already a matching rig, then just update it
-                elif obj["FSim"][-3:] == src_obj.name[:3]:
-                    # print("matching armature", armatures[obj.name])
-                    TargRig = scene.objects.get(armatures[obj.name])
-                    if TargRig is not None:
-                        #reposition if required
-                        if scene.fsim_multisim:
-                            TargRig.animation_data_clear()
-                            TargRig.location = obj.location
-                            TargRig.rotation_euler = obj.rotation_euler
-                            TargRig.rotation_euler.z += math.radians(scene.fsim_startangle)
-                            # print("frame, rig: ", obj.location, TargRig.location)
-                        
-                        #if no children, and the 'copymesh' flag set, then copy the associated meshes
-                        if scene.fsim_copymesh and len(TargRig.children) < 1:
-                            self.CopyChildren(scene, src_obj, TargRig)
-                        
-                        #Leave the just generated objects selected
-                        scene.objects.active = TargRig
-                        TargRig.select = True
-                        src_obj.select = False
-                        for childObj in TargRig.children:
-                            childObj.select = True
-                        for childObj in src_obj.children:
-                            childObj.select = False
-
-                        #Animate
-                        if scene.fsim_multisim and TargRig.name != src_obj.name:
-                            self.BoneMovement(TargRig, scene.fsim_start_frame, scene.fsim_end_frame, context)
-                
-            
-
+    
     def RemoveKeyframes(self, armature, bones):
         dispose_paths = []
         #dispose_paths.append('pose.bones["{}"].rotation_quaternion'.format(bone.name))
@@ -275,43 +131,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         dispose_curves = [fcurve for fcurve in armature.animation_data.action.fcurves if fcurve.data_path in dispose_paths]
         for fcurve in dispose_curves:
             armature.animation_data.action.fcurves.remove(fcurve)
-        
-    def draw(self, context):
-        layout = self.layout
-        layout.operator('screen.repeat_last', text="Repeat", icon='FILE_REFRESH' )
-        
-        box = layout.box()
-        box.label("Main Parameters")
-        box.prop(self, "pMass")
-        box.prop(self, "pDrag")
-        box.prop(self, "pPower")
-        box.prop(self, "pMaxFreq")
-        box.prop(self, "pMaxTailAngle")
-        box = layout.box()
-        box.label("Turning Parameters")
-        box.prop(self, "pAngularDrag")
-        box.prop(self, "pMaxSteeringAngle")
-        box.prop(self, "pTurnAssist")
-        box.prop(self, "pLeanIntoTurn")
-        box = layout.box()
-        box.label("Target Tracking")
-        box.prop(self, "pEffortGain")
-        box.prop(self, "pEffortIntegral")
-        box.prop(self, "pEffortRamp")
-        box = layout.box()
-        box.label("Fine Tuning")
-        box.prop(self, "pMaxTailFinAngle")
-        box.prop(self, "pTailFinGain")
-        box.prop(self, "pTailFinStiffness")
-        box.prop(self, "pTailFinStubRatio")
-        box.prop(self, "pMaxSideFinAngle")
-        box.prop(self, "pSideFinGain")
-        box.prop(self, "pSideFinStiffness")
-        box.prop(self, "pChestRatio")
-        box.prop(self, "pChestRaise")
-        box.prop(self, "pMaxVerticalAngle")
-        box.prop(self, "pRandom")
-        
+
     #Set Effort and Direction properties to try and reach the target.
     def Target(self, TargetRig, TargetProxy):
         RigDirn = mathutils.Vector((0,-1,0)) * TargetRig.matrix_world.inverted()
@@ -344,13 +164,13 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         return DifDot,DirectionEffort,DirectionEffortV
         
     #Handle the object movement
-    def ObjectMovment(self, TargetRig, ForwardForce, AngularForce, AngularForceV, nFrame, TargetProxy):
+    def ObjectMovment(self, TargetRig, ForwardForce, AngularForce, AngularForceV, nFrame, TargetProxy, pFS):
         RigDirn = mathutils.Vector((0,-1,0)) * TargetRig.matrix_world.inverted()
         #Total force is tail force - drag
-        DragForce = self.pDrag * self.sVelocity ** 2.0
-        self.sVelocity += (ForwardForce - DragForce) / self.pMass
+        DragForce = pFS.pDrag * pFS.sVelocity ** 2.0
+        pFS.sVelocity += (ForwardForce - DragForce) / pFS.pMass
         #print("Fwd, Drag: ", ForwardForce, DragForce)
-        TargetRig.location += self.sVelocity * RigDirn
+        TargetRig.location += pFS.sVelocity * RigDirn
         TargetRig.keyframe_insert(data_path='location',  frame=(nFrame))
         
         #Let's be simplistic - just rotate object based on angluar force
@@ -358,275 +178,452 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         TargetRig.rotation_euler.x += math.radians(AngularForceV)
         TargetRig.keyframe_insert(data_path='rotation_euler',  frame=(nFrame))
         
+    #Handle the movement of the bones within the armature        
+    def BoneMovement(self, context):
+    
         
+        scene = context.scene
+        pFS = scene.FSimProps
+        pFSM = scene.FSimMainProps
+        startFrame = pFSM.fsim_start_frame
+        endFrame = pFSM.fsim_end_frame
         
-#Handle the movement of the bones within the armature        
-    def BoneMovement(self, TargetRig, startFrame, endFrame, context):
+        #Get the current Target Rig
+        TargetRig = scene.objects.get(self.sArmatures[self.nArmature])
+        self.sTargetRig = TargetRig
     
         #Check the required Rigify bones are present
-        root = TargetRig.pose.bones.get("root")
-        torso = TargetRig.pose.bones.get("torso")
-        spine_master = TargetRig.pose.bones.get("spine_master")
-        back_fin1 = TargetRig.pose.bones.get("back_fin_masterBk.001")
-        back_fin2 = TargetRig.pose.bones.get("back_fin_masterBk")
-        back_fin_middle = TargetRig.pose.bones.get("DEF-back_fin.T.001.Bk")
-        chest = TargetRig.pose.bones.get("chest")
-        SideFinL = TargetRig.pose.bones.get("side_fin.L")
-        SideFinR = TargetRig.pose.bones.get("side_fin.R")
-        if (spine_master is None) or (torso is None) or (chest is None) or (back_fin1 is None) or (back_fin2 is None) or (back_fin_middle is None) or (SideFinL is None) or (SideFinR is None):
+        self.sRoot = TargetRig.pose.bones.get("root")
+        self.sTorso = TargetRig.pose.bones.get("torso")
+        self.sSpine_master = TargetRig.pose.bones.get("spine_master")
+        self.sBack_fin1 = TargetRig.pose.bones.get("back_fin_masterBk.001")
+        self.sBack_fin2 = TargetRig.pose.bones.get("back_fin_masterBk")
+        self.sBack_fin_middle = TargetRig.pose.bones.get("DEF-back_fin.T.001.Bk")
+        self.sChest = TargetRig.pose.bones.get("chest")
+        self.sSideFinL = TargetRig.pose.bones.get("side_fin.L")
+        self.sSideFinR = TargetRig.pose.bones.get("side_fin.R")
+        if (self.sSpine_master is None) or (self.sTorso is None) or (self.sChest is None) or (self.sBack_fin1 is None) or (self.sBack_fin2 is None) or (self.sBack_fin_middle is None) or (self.sSideFinL is None) or (self.sSideFinR is None):
             self.report({'ERROR'}, "Sorry, this addon needs a Rigify rig generated from a Shark Metarig")
             print("Not an Suitable Rigify Armature")
             return 0,0
             
         #initialise state variabiles
-        sState = 0.0
-        AngularForceV = 0.0
+        self.sState = 0.0
+        self.AngularForceV = 0.0
             
         #Get TargetProxy object details
         try:
-            TargetProxyName = root["TargetProxy"]
-            TargetProxy = bpy.data.objects[TargetProxyName]
+            TargetProxyName = self.sRoot["TargetProxy"]
+            self.sTargetProxy = bpy.data.objects[TargetProxyName]
         except:
-            TargetProxy = None
+            self.sTargetProxy = None
 
         #Go back to the start before removing keyframes to remember starting point
         context.scene.frame_set(startFrame)
        
         #Delete existing keyframes
         try:
-            self.RemoveKeyframes(TargetRig, [spine_master, back_fin1, back_fin2, chest, SideFinL, SideFinR])
+            self.RemoveKeyframes(TargetRig, [self.sSpine_master, self.sBack_fin1, self.sBack_fin2, self.sChest, self.sSideFinL, self.sSideFinR])
         except:
             print("info: no keyframes")
         
         #record to previous tail position
         context.scene.frame_set(startFrame)
+        context.scene.update()
         
         #randomise parameters
-        rFact = self.pRandom
-        rMaxTailAngle = self.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
-        rMaxFreq = self.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
-        
-        rTurnAssist = self.pTurnAssist * (1 + (random() * 2.0 - 1.0) * rFact)
-        
+        rFact = pFS.pRandom
+        self.rMaxTailAngle = pFS.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
+        self.rMaxFreq = pFS.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
         
         #Progress bar
         wm = context.window_manager
         wm.progress_begin(0.0,100.0)
+        
+    def ModalMove(self, context):
+        scene = context.scene
+        pFS = scene.FSimProps
+        pFSM = scene.FSimMainProps
+        startFrame = pFSM.fsim_start_frame
+        endFrame = pFSM.fsim_end_frame
+        
+        nFrame = scene.frame_current
+        
+        print("Target Rig and Proxy: ", self.sTargetRig.name, self.sTargetProxy.name)
+        
+        
+        #Get the effort and direction change to head toward the target
+        RqdEffort, RqdDirection, RqdDirectionV = self.Target(self.sTargetRig, self.sTargetProxy)
+        if nFrame == startFrame:
+            self.sOldRqdEffort = RqdEffort
+        TargetEffort = pFS.pEffortGain * (pFS.pEffortIntegral * RqdEffort + (RqdEffort - self.sOldRqdEffort))
+        self.sOldRqdEffort = RqdEffort
+        pFS.sEffort = pFS.pEffortGain * RqdEffort * pFS.pEffortRamp + pFS.sEffort * (1.0-pFS.pEffortRamp)
+        pFS.sEffort = min(pFS.sEffort, 1.0)
+        #print("Required, Effort:", RqdEffort, pFS.sEffort)
+        
+        #Convert effort into tail frequency and amplitude
+        pFS.pFreq = self.rMaxFreq * (1.0/(pFS.sEffort+ 0.01))
+        pFS.pTailAngle = self.rMaxTailAngle * pFS.sEffort
+        
+        #Convert direction into Tail angle
+        pFS.sTailAngleOffset = pFS.sTailAngleOffset * (1 - pFS.pEffortRamp) + RqdDirection * pFS.pMaxSteeringAngle * pFS.pEffortRamp
+        #print("TailOffset: ", pFS.sTailAngleOffset)
+        
+        
+        #Spine Movement
+        self.sState = self.sState + 360.0 / pFS.pFreq
+        xTailAngle = math.sin(math.radians(self.sState))*math.radians(self.rMaxTailAngle) + math.radians(pFS.sTailAngleOffset)
+        #print("TailAngle", xTailAngle)
+        self.sSpine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
+        self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        ChestRot = mathutils.Quaternion((0.0, 0.0, 1.0), -xTailAngle * pFS.pChestRatio - math.radians(pFS.sTailAngleOffset))
+        self.sChest.rotation_quaternion = ChestRot * mathutils.Quaternion((1.0, 0.0, 0.0), -math.fabs(math.radians(pFS.sTailAngleOffset))*pFS.pChestRaise)
+        #print("Torso:", pFS.sTailAngleOffset)
+        self.sTorso.rotation_quaternion = mathutils.Quaternion((0.0, 1.0, 0.0), -math.radians(pFS.sTailAngleOffset)*pFS.pLeanIntoTurn)
+        self.sChest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        self.sTorso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        #context.scene.update()
 
-        #simulate for each frame
-        for nFrame in range(startFrame, endFrame):
-            context.scene.frame_set(nFrame)
-            if nFrame == endFrame:
-                wm.progress_end()
-            else:
-                wm.progress_update((nFrame - startFrame)*100.0/(endFrame - startFrame))
+        #Tail Movment
+        if (nFrame == startFrame):
+            back_fin_dif = 0
+        else:
+            back_fin_dif = (self.sBack_fin_middle.matrix.decompose()[0].x - self.sOld_back_fin.x)
+        self.sOld_back_fin = self.sBack_fin_middle.matrix.decompose()[0]
+    
+        #Tail Fin angle based on Tail movement
+        pMaxTailScale = pFS.pMaxTailFinAngle * 0.4 / 30.0
+        currentTailScale = self.sBack_fin1.scale[1]
+        if (back_fin_dif < 0) :
+            TailScaleIncr = (1 + pMaxTailScale - currentTailScale) * pFS.pTailFinGain * math.fabs(back_fin_dif)
+            #print("Positive scale: ", TailScaleIncr)
+        else:
+            TailScaleIncr = (1 - pMaxTailScale - currentTailScale) * pFS.pTailFinGain * math.fabs(back_fin_dif)
+            #print("Negative scale: ", TailScaleIncr)
+        
+        #Tail Fin stiffness factor
+        TailFinStiffnessIncr = (1 - currentTailScale) * pFS.pTailFinStiffness
+        
+        if (nFrame == startFrame):
+            self.sBack_fin1_scale = 1.0
+        else:
+            self.sBack_fin1_scale = self.sBack_fin1.scale[1] + TailScaleIncr + TailFinStiffnessIncr
             
-            #Get the effort and direction change to head toward the target
-            RqdEffort, RqdDirection, RqdDirectionV = self.Target(TargetRig, TargetProxy)
-            if nFrame == startFrame:
-                OldRqdEffort = RqdEffort
-            TargetEffort = self.pEffortGain * (self.pEffortIntegral * RqdEffort + (RqdEffort - OldRqdEffort))
-            OldRqdEffort = RqdEffort
-            self.sEffort = self.pEffortGain * RqdEffort * self.pEffortRamp + self.sEffort * (1.0-self.pEffortRamp)
-            self.sEffort = min(self.sEffort, 1.0)
-            #print("Required, Effort:", RqdEffort, self.sEffort)
-            
-            #Convert effort into tail frequency and amplitude
-            self.sFreq = rMaxFreq * (1.0/(self.sEffort+ 0.01))
-            self.sTailAngle = rMaxTailAngle * self.sEffort
-            
-            #Convert direction into Tail angle
-            self.sTailAngleOffset = self.sTailAngleOffset * (1 - self.pEffortRamp) + RqdDirection * self.pMaxSteeringAngle * self.pEffortRamp
-            #print("TailOffset: ", self.sTailAngleOffset)
-            
-            
-            #Spine Movement
-            sState = sState + 360.0 / self.sFreq
-            xTailAngle = math.sin(math.radians(sState))*math.radians(rMaxTailAngle) + math.radians(self.sTailAngleOffset)
-            #print("TailAngle", xTailAngle)
-            spine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
-            spine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-            ChestRot = mathutils.Quaternion((0.0, 0.0, 1.0), -xTailAngle * self.pChestRatio - math.radians(self.sTailAngleOffset))
-            chest.rotation_quaternion = ChestRot * mathutils.Quaternion((1.0, 0.0, 0.0), -math.fabs(math.radians(self.sTailAngleOffset))*self.pChestRaise)
-            #print("Torso:", self.sTailAngleOffset)
-            torso.rotation_quaternion = mathutils.Quaternion((0.0, 1.0, 0.0), -math.radians(self.sTailAngleOffset)*self.pLeanIntoTurn
-)
-            chest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-            torso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-            #context.scene.update()
+        #Limit Tail Fin maximum deflection    
+        if (self.sBack_fin1_scale > (pMaxTailScale + 1)):
+            self.sBack_fin1_scale = pMaxTailScale + 1
+        if (self.sBack_fin1_scale < (-pMaxTailScale + 1)):
+            self.sBack_fin1_scale = -pMaxTailScale + 1
+        self.sBack_fin1.scale[1] = self.sBack_fin1_scale
+        self.sBack_fin2.scale[1] = 1 - (1 - self.sBack_fin1_scale) * pFS.pTailFinStubRatio
+        #scene.update()
+        #print("New Scale:", self.sBack_fin1.scale[1])
+        self.sBack_fin1.keyframe_insert(data_path='scale',  frame=(nFrame))
+        self.sBack_fin2.keyframe_insert(data_path='scale',  frame=(nFrame))
+        
+        #Side Fin angle based on Tail movement
+        pMaxSideFinAngle = pFS.pMaxSideFinAngle
+        currentSideFinRot = math.degrees(self.sSideFinL.rotation_quaternion.to_euler().x)
+        if (back_fin_dif < 0) :
+            SideIncr = (pMaxSideFinAngle - currentSideFinRot) * pFS.pSideFinGain * math.fabs(back_fin_dif)
+            #print("Side Positive scale: ", SideIncr)
+        else:
+            SideIncr = (-pMaxSideFinAngle - currentSideFinRot) * pFS.pSideFinGain * math.fabs(back_fin_dif)
+            #print("Side Negative scale: ", SideIncr)
+        
+        #Side Fin stiffness factor
+        SideFinStiffnessIncr = -currentSideFinRot * pFS.pSideFinStiffness
+        
+        if (nFrame == startFrame):
+            SideFinRot = 0.0
+        else:
+            SideFinRot = currentSideFinRot + SideIncr + SideFinStiffnessIncr
+            #print("Current, incr, stiff: ", currentSideFinRot, SideIncr, SideFinStiffnessIncr)
 
-            
-            #Tail Movment
-            if (nFrame == startFrame):
-                back_fin_dif = 0
-            else:
-                back_fin_dif = (back_fin_middle.matrix.decompose()[0].x - old_back_fin.x)
-            #print("back_fin dif: ", nFrame, back_fin_dif)
-            #print("new_back_fin", nFrame, back_fin_middle.matrix.decompose()[0])
-            old_back_fin = back_fin_middle.matrix.decompose()[0]
-            
-            #Tail Fin angle based on Tail movement
-            pMaxTailScale = self.pMaxTailFinAngle * 0.4 / 30.0
-            currentTailScale = back_fin1.scale[1]
-            if (back_fin_dif < 0) :
-                TailScaleIncr = (1 + pMaxTailScale - currentTailScale) * self.pTailFinGain * math.fabs(back_fin_dif)
-                #print("Positive scale: ", TailScaleIncr)
-            else:
-                TailScaleIncr = (1 - pMaxTailScale - currentTailScale) * self.pTailFinGain * math.fabs(back_fin_dif)
-                #print("Negative scale: ", TailScaleIncr)
-            
-            #Tail Fin stiffness factor
-            TailFinStiffnessIncr = (1 - currentTailScale) * self.pTailFinStiffness
-            
-            if (nFrame == startFrame):
-                back_fin1_scale = 1.0
-            else:
-                back_fin1_scale = back_fin1.scale[1] + TailScaleIncr + TailFinStiffnessIncr
+        #Limit Side Fin maximum deflection    
+        if (SideFinRot > pMaxSideFinAngle):
+            SideFinRot = pMaxSideFinAngle
+        if (SideFinRot < -pMaxSideFinAngle):
+            SideFinRot = -pMaxSideFinAngle
+        self.sSideFinL.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(-SideFinRot))
+        self.sSideFinR.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(SideFinRot))
+        #scene.update()
+        self.sSideFinL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        self.sSideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        
+        #Do Object movment with Forward force and Angular force
+        TailFinAngle = (self.sBack_fin1_scale - 1.0) * 30.0 / 0.4
+        TailFinAngleForce = math.sin(math.radians(TailFinAngle))
+        ForwardForce = -back_fin_dif * TailFinAngleForce * pFS.pPower
+        
+        #Angular force due to 'swish'
+        AngularForce = back_fin_dif  / pFS.pAngularDrag
+        
+        #Angular force due to rudder effect
+        AngularForce += -xTailAngle * pFS.sVelocity / pFS.pAngularDrag
+        
+        #Fake Angular force to make turning more effective
+        AngularForce += -(pFS.sTailAngleOffset/pFS.pMaxSteeringAngle) * pFS.pTurnAssist
+        
+        #Angular force for vertical movement
+        self.sAngularForceV = self.sAngularForceV * (1 - pFS.pEffortRamp) + RqdDirectionV * pFS.pMaxVerticalAngle
+        
+        
+        #print("TailFinAngle, AngularForce", xTailAngle, AngularForce)
+        self.ObjectMovment(self.sTargetRig, ForwardForce, AngularForce, self.sAngularForceV, nFrame, self.sTargetProxy, pFS)
+        
+        #Go to next frame, or finish
+        wm = context.window_manager
+        print("Frame: ", nFrame)
+        if nFrame == endFrame:
+            wm.progress_end()
+            return 0
+        else:
+            wm.progress_update((nFrame - startFrame)*100.0/(endFrame - startFrame))
+            context.scene.frame_set(nFrame + 1)
+            return 1
+        
+
+    def modal(self, context, event):
+        if event.type in {'RIGHTMOUSE', 'ESC'}:
+            self.cancel(context)
+            return {'CANCELLED'}
+
+        if event.type == 'TIMER':
+            modal_rtn = self.ModalMove(context)
+            if modal_rtn == 0:
+                print("nArmature:", self.nArmature)
+                #Go to the next rig if applicable
+                context.scene.frame_set(context.scene.FSimMainProps.fsim_start_frame)
+                if self.nArmature > 0:
+                    self.nArmature -= 1
+                    self.BoneMovement(context) 
+
+                else:
+                    return {'CANCELLED'}
+
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        sFPM = context.scene.FSimMainProps
+        # try:
+            # self.sTargetRig = scene.objects.get(sFPM.fsim_targetrig)
+        # except:
+        self.sTargetRig = context.object
+        scene = context.scene
+        
+        #Load a list of the relevant armatures
+        self.armature_list(scene, sFPM)
+        
+        scene.frame_set(sFPM.fsim_start_frame)
+        self.BoneMovement(context) 
+        wm = context.window_manager
+        self._timer = wm.event_timer_add(0.001, context.window)
+        wm.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        wm = context.window_manager
+        wm.event_timer_remove(self._timer)
+
+    def draw(self, context):
+        pFS = context.scene.FSimProps
+        layout = self.layout
+        layout.operator('screen.repeat_last', text="Repeat", icon='FILE_REFRESH' )
+        
+        box = layout.box()
+        box.label("Main Parameters")
+        box.prop(pFS, "pMass")
+        box.prop(pFS, "pDrag")
+        box.prop(pFS, "pPower")
+        box.prop(pFS, "pMaxFreq")
+        box.prop(pFS, "pMaxTailAngle")
+        box = layout.box()
+        box.label("Turning Parameters")
+        box.prop(pFS, "pAngularDrag")
+        box.prop(pFS, "pMaxSteeringAngle")
+        box.prop(pFS, "pTurnAssist")
+        box.prop(pFS, "pLeanIntoTurn")
+        box = layout.box()
+        box.label("Target Tracking")
+        box.prop(pFS, "pEffortGain")
+        box.prop(pFS, "pEffortIntegral")
+        box.prop(pFS, "pEffortRamp")
+        box = layout.box()
+        box.label("Fine Tuning")
+        box.prop(pFS, "pMaxTailFinAngle")
+        box.prop(pFS, "pTailFinGain")
+        box.prop(pFS, "pTailFinStiffness")
+        box.prop(pFS, "pTailFinStubRatio")
+        box.prop(pFS, "pMaxSideFinAngle")
+        box.prop(pFS, "pSideFinGain")
+        box.prop(pFS, "pSideFinStiffness")
+        box.prop(pFS, "pChestRatio")
+        box.prop(pFS, "pChestRaise")
+        box.prop(pFS, "pMaxVerticalAngle")
+        box.prop(pFS, "pRandom")
+
+
+class ARMATURE_OT_FSim_Run(bpy.types.Operator):
+    """Simulate and add keyframes for the armature to make it swim towards the target"""
+    bl_label = "Copy Models"
+    bl_idname = "armature.fsim_run"
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
+    
+    add_preset_files()
+    
+    root = None
+
+    
+
+    def CopyChildren(self, scene, src_obj, new_obj):
+        for childObj in src_obj.children:
+            print("Copying child: ", childObj.name)
+            new_child = childObj.copy()
+            new_child.data = childObj.data.copy()
+            new_child.animation_data_clear()
+            new_child.location = childObj.location - src_obj.location
+            new_child.parent = new_obj
+            scene.objects.link(new_child)
+            new_child.select = True
+            for mod in new_child.modifiers:
+                if mod.type == "ARMATURE":
+                    mod.object = new_obj
+
+    
+    def CopyRigs(self, context):
+        print("Populate")
+        
+        scene = context.scene
+        src_obj = context.object
+        if src_obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+        src_obj.select = False
+        
+        #make a list of armatures
+        armatures = {}
+        for obj in scene.objects:
+            if obj.type == "ARMATURE" and obj.name[:3] == src_obj.name[:3]:
+                root = obj.pose.bones.get("root")
+                if root != None:
+                    if 'TargetProxy' in root:
+                        proxyName = root['TargetProxy']
+                        if len(proxyName) > 1:
+                            armatures[proxyName] = obj.name
+        
+        #for each target...
+        obj_count = 0
+        for obj in scene.objects:
+            if "FSim" in obj and (obj["FSim"][-3:] == src_obj.name[:3]):
+                #Limit the maximum copy number
+                if obj_count >= scene.FSimMainProps.fsim_maxnum:
+                    return  {'FINISHED'}
+                obj_count += 1
                 
-            #Limit Tail Fin maximum deflection    
-            if (back_fin1_scale > (pMaxTailScale + 1)):
-                back_fin1_scale = pMaxTailScale + 1
-            if (back_fin1_scale < (-pMaxTailScale + 1)):
-                back_fin1_scale = -pMaxTailScale + 1
-            back_fin1.scale[1] = back_fin1_scale
-            back_fin2.scale[1] = 1 - (1 - back_fin1_scale) * self.pTailFinStubRatio
-            #scene.update()
-            #print("New Scale:", back_fin1.scale[1])
-            back_fin1.keyframe_insert(data_path='scale',  frame=(nFrame))
-            back_fin2.keyframe_insert(data_path='scale',  frame=(nFrame))
-            
-            #Side Fin angle based on Tail movement
-            pMaxSideFinAngle = self.pMaxSideFinAngle
-            currentSideFinRot = math.degrees(SideFinL.rotation_quaternion.to_euler().x)
-            if (back_fin_dif < 0) :
-                SideIncr = (pMaxSideFinAngle - currentSideFinRot) * self.pSideFinGain * math.fabs(back_fin_dif)
-                #print("Side Positive scale: ", SideIncr)
-            else:
-                SideIncr = (-pMaxSideFinAngle - currentSideFinRot) * self.pSideFinGain * math.fabs(back_fin_dif)
-                #print("Side Negative scale: ", SideIncr)
-            
-            #Side Fin stiffness factor
-            SideFinStiffnessIncr = -currentSideFinRot * self.pSideFinStiffness
-            
-            if (nFrame == startFrame):
-                SideFinRot = 0.0
-            else:
-                SideFinRot = currentSideFinRot + SideIncr + SideFinStiffnessIncr
-                #print("Current, incr, stiff: ", currentSideFinRot, SideIncr, SideFinStiffnessIncr)
+                #Go back to the first frame to make sure the rigs are placed correctly
+                scene.frame_set(scene.FSimMainProps.fsim_start_frame)
+                scene.update()
+                
+                #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
+                if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
+                    print("time to duplicate")
 
-            #Limit Side Fin maximum deflection    
-            if (SideFinRot > pMaxSideFinAngle):
-                SideFinRot = pMaxSideFinAngle
-            if (SideFinRot < -pMaxSideFinAngle):
-                SideFinRot = -pMaxSideFinAngle
-            SideFinL.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(-SideFinRot))
-            SideFinR.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(SideFinRot))
-            #scene.update()
-            SideFinL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-            SideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+                    if scene.FSimMainProps.fsim_copyrigs:
+                        #If there is not already a matching armature, duplicate the template and update the link field
+                        new_obj = src_obj.copy()
+                        new_obj.data = src_obj.data.copy()
+                        new_obj.animation_data_clear()
+                        scene.objects.link(new_obj)
+                        new_obj.location = obj.location
+                        new_obj.rotation_euler = obj.rotation_euler
+                        new_root = new_obj.pose.bones.get('root')
+                        new_root['TargetProxy'] = obj.name
+                        new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
+                        scene.objects.active = new_obj
+                        new_obj.select = True
+                        src_obj.select = False
+                        # if scene.FSimMainProps.fsim_multisim and new_obj.name != src_obj.name:
+                            # # self.BoneMovement(new_obj, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
+                            # bpy.ops.armature.fsimulate()
+                        
+                        #if 'CopyMesh' is selected duplicate the dependents and re-link
+                        if scene.FSimMainProps.fsim_copymesh:
+                            self.CopyChildren(scene, src_obj, new_obj)
+
+                #If there's already a matching rig, then just update it
+                elif obj["FSim"][-3:] == src_obj.name[:3]:
+                    print("matching armature", armatures[obj.name])
+                    TargRig = scene.objects.get(armatures[obj.name])
+                    if TargRig is not None:
+                        #reposition if required
+                        if scene.FSimMainProps.fsim_multisim:
+                            TargRig.animation_data_clear()
+                            TargRig.location = obj.location
+                            TargRig.rotation_euler = obj.rotation_euler
+                            TargRig.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
+                            print("frame, rig: ", obj.location, TargRig.location)
+                        
+                        #if no children, and the 'copymesh' flag set, then copy the associated meshes
+                        if scene.FSimMainProps.fsim_copymesh and len(TargRig.children) < 1:
+                            self.CopyChildren(scene, src_obj, TargRig)
+                        
+                        #Leave the just generated objects selected
+                        scene.objects.active = TargRig
+                        TargRig.select = True
+                        src_obj.select = False
+                        for childObj in TargRig.children:
+                            childObj.select = True
+                        for childObj in src_obj.children:
+                            childObj.select = False
+
+                        # #Animate
+                        # if scene.FSimMainProps.fsim_multisim and TargRig.name != src_obj.name:
+                            # # self.BoneMovement(TargRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
+                            # bpy.ops.armature.fsimulate()
+                
             
-            #Do Object movment with Forward force and Angular force
-            TailFinAngle = (back_fin1_scale - 1.0) * 30.0 / 0.4
-            TailFinAngleForce = math.sin(math.radians(TailFinAngle))
-            ForwardForce = -back_fin_dif * TailFinAngleForce * self.pPower
-            
-            #Angular force due to 'swish'
-            AngularForce = back_fin_dif  / self.pAngularDrag
-            
-            #Angular force due to rudder effect
-            AngularForce += -xTailAngle * self.sVelocity / self.pAngularDrag
-            
-            #Fake Angular force to make turning more effective
-            AngularForce += -(self.sTailAngleOffset/self.pMaxSteeringAngle) * rTurnAssist
-            
-            #Angular force for vertical movement
-            AngularForceV = AngularForceV * (1 - self.pEffortRamp) + RqdDirectionV * self.pMaxVerticalAngle
-            
-            
-            #print("TailFinAngle, AngularForce", xTailAngle, AngularForce)
-            self.ObjectMovment(TargetRig, ForwardForce, AngularForce, AngularForceV, nFrame, TargetProxy)
+
 
         
     def execute(self, context):
         #Get the object
         TargetRig = context.object
         scene = context.scene
+        scene.FSimMainProps.fsim_targetrig = TargetRig.name
+        scene = context.scene
         if TargetRig.type != "ARMATURE":
             print("Not an Armature", context.object.type)
             return  {'FINISHED'}
        
-        if scene.fsim_copyrigs or scene.fsim_copymesh or scene.fsim_multisim:
+        # print("Call test")
+        # bpy.ops.armature.fsim_test()
+        
+        if scene.FSimMainProps.fsim_copyrigs or scene.FSimMainProps.fsim_copymesh:
             self.CopyRigs(context)
-        else:
-            self.BoneMovement(TargetRig, scene.fsim_start_frame, scene.fsim_end_frame, context)   
+        # else:
+            # # self.BoneMovement(TargetRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)   
+            # bpy.ops.armature.fsimulate()
         
         return {'FINISHED'}
 
-
-
-#UI Panels
-
-class ARMATURE_PT_FSim(bpy.types.Panel):
-    """Creates a Panel in the Object properties window"""
-    bl_label = "FishSim"
-    bl_idname = "armature.fsim"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_category = "FishSim"
-    #bl_context = "objectmode"
-    
-    @classmethod
-    def poll(cls, context):
-        if context.object != None:
-            return (context.mode in {'OBJECT', 'POSE'}) and (context.object.type == "ARMATURE")
-        else:
-            return False
-
-    def draw(self, context):
-        layout = self.layout
-
-        obj1 = context.object
-        scene = context.scene
-        # row = layout.row()
-        # row.label(text="Active object is: " + obj1.name)
-        #row = layout.row()
-        #row.prop(obj1, "name")
-        row = layout.row()
-        row.label("Animation Range")
-        row = layout.row()
-        row.prop(scene, "fsim_start_frame")
-        row = layout.row()
-        row.prop(scene, "fsim_end_frame")
-        row = layout.row()
-        row.operator("armature.fsim_add")
-        row = layout.row()
-        row.operator("armature.fsim_run")
-        #row = layout.row()
-        #row.operator("armature.fsim_populate")
-        box = layout.box()
-        box.label("Multi Sim Options")
-        box.prop(scene, "fsim_copyrigs")
-        box.prop(scene, "fsim_copymesh")
-        box.prop(scene, "fsim_multisim")
-        box.prop(scene, "fsim_maxnum")
-        box.prop(scene, "fsim_startangle")
-
         
 
 
-def register():
-    bpy.utils.register_class(ARMATURE_OT_FSim_Add)
+def registerTypes():
+    bpy.utils.register_class(FSimProps)
+    bpy.types.Scene.FSimProps = bpy.props.PointerProperty(type=FSimProps)
     bpy.utils.register_class(ARMATURE_OT_FSim_Run)
-    bpy.utils.register_class(ARMATURE_PT_FSim)
+    bpy.utils.register_class(ARMATURE_OT_FSimulate)
+    # print("Register2")
 
-
-def unregister():
-    bpy.utils.unregister_class(ARMATURE_OT_FSim_Add)
+def unregisterTypes():
+    del bpy.types.Scene.FSimProps
+    bpy.utils.unregister_class(FSimProps)
     bpy.utils.unregister_class(ARMATURE_OT_FSim_Run)
-    bpy.utils.unregister_class(ARMATURE_PT_FSim)
+    bpy.utils.unregister_class(ARMATURE_OT_FSimulate)
 
 
 if __name__ == "__main__":
-    add_preset_files()
     register()
 
