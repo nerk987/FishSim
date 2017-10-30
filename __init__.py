@@ -43,6 +43,17 @@ import bpy
 import mathutils,  math, os
 from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, StringProperty
 from random import random
+from bpy.types import Operator, Panel, Menu
+from bl_operators.presets import AddPresetBase
+
+def add_preset_files():
+    presets   = bpy.utils.user_resource('SCRIPTS', "presets")
+    mypresets = os.path.join(presets, "operator\\fishsim")
+    if not os.path.exists(mypresets):
+        os.makedirs(mypresets)    
+        # print("Presets dir added:", mypresets)
+    # mypath = os.path.join(mypresets, "myfile.xxx")
+
 
 class FSimMainProps(bpy.types.PropertyGroup):
     fsim_targetrig = StringProperty(name="Name of the target rig", default="")  
@@ -118,11 +129,134 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
 
 
 #UI Panels
+class AMATURE_MT_fsim_presets(Menu):
+    bl_label = "FishSim Presets"
+    preset_subdir = "operator/fishsim"
+    preset_operator = "script.execute_preset"
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'CYCLES_RENDER', 'BLENDER_GAME'}
+    draw = Menu.draw_preset
+    
+class AddPresetFSim(AddPresetBase, Operator):
+    '''Add a Object Draw Preset'''
+    bl_idname = "armature.addpresetfsim"
+    bl_label = "Add FSim Draw Preset"
+    preset_menu = "AMATURE_MT_fsim_presets"
+
+    # variable used for all preset values
+    preset_defines = [
+        "pFS = bpy.context.scene.FSimProps"
+        ]
+
+    # properties to store in the preset
+    preset_values = [
+        "pFS.pMass",
+        "pDrag",
+        "pPower",
+        "pMaxFreq",
+        "pMaxTailAngle",
+        "pAngularDrag",
+        "pMaxSteeringAngle",
+        "pTurnAssist",
+        "pLeanIntoTurn",
+        "pEffortGain",
+        "pEffortIntegral",
+        "pEffortRamp",
+        "pMaxTailFinAngle",
+        "pTailFinGain",
+        "pTailFinStiffness",
+        "pTailFinStubRatio",
+        "pMaxSideFinAngle",
+        "pSideFinGain",
+        "pSideFinStiffness",
+        "pChestRatio",
+        "pChestRaise",
+        "pMaxVerticalAngle",
+        "pRandom",
+        ]
+
+    # where to store the preset
+    preset_subdir = "operator/fishsim"
 
 class ARMATURE_PT_FSim(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "FishSim"
     bl_idname = "armature.fsim"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_category = "FishSim"
+    #bl_context = "objectmode"
+    
+
+
+    @classmethod
+    def poll(cls, context):
+        if context.object != None:
+            return (context.mode in {'OBJECT', 'POSE'}) and (context.object.type == "ARMATURE")
+        else:
+            return False
+
+    def draw(self, context):
+        layout = self.layout
+
+        obj1 = context.object
+        scene = context.scene
+        
+        row = layout.row()
+        row.label("Animation Ranges")
+        row = layout.row()
+        row.prop(scene.FSimMainProps, "fsim_start_frame")
+        row = layout.row()
+        row.prop(scene.FSimMainProps, "fsim_end_frame")
+        row = layout.row()
+        row.operator("armature.fsim_add")
+        row = layout.row()
+        row.operator("armature.fsimulate")
+        row = layout.row()
+        box = layout.box()
+        # box.label("Multi Sim Options")
+        box.operator("armature.fsim_run")
+        box.prop(scene.FSimMainProps, "fsim_copyrigs")
+        box.prop(scene.FSimMainProps, "fsim_copymesh")
+        box.prop(scene.FSimMainProps, "fsim_maxnum")
+        box.prop(scene.FSimMainProps, "fsim_startangle")
+        # pFS = context.scene.FSimProps
+        
+        # box = layout.box()
+        # box.label("Main Parameters")
+        # box.prop(pFS, "pMass")
+        # box.prop(pFS, "pDrag")
+        # box.prop(pFS, "pPower")
+        # box.prop(pFS, "pMaxFreq")
+        # box.prop(pFS, "pMaxTailAngle")
+        # box = layout.box()
+        # box.label("Turning Parameters")
+        # box.prop(pFS, "pAngularDrag")
+        # box.prop(pFS, "pMaxSteeringAngle")
+        # box.prop(pFS, "pTurnAssist")
+        # box.prop(pFS, "pLeanIntoTurn")
+        # box = layout.box()
+        # box.label("Target Tracking")
+        # box.prop(pFS, "pEffortGain")
+        # box.prop(pFS, "pEffortIntegral")
+        # box.prop(pFS, "pEffortRamp")
+        # box = layout.box()
+        # box.label("Fine Tuning")
+        # box.prop(pFS, "pMaxTailFinAngle")
+        # box.prop(pFS, "pTailFinGain")
+        # box.prop(pFS, "pTailFinStiffness")
+        # box.prop(pFS, "pTailFinStubRatio")
+        # box.prop(pFS, "pMaxSideFinAngle")
+        # box.prop(pFS, "pSideFinGain")
+        # box.prop(pFS, "pSideFinStiffness")
+        # box.prop(pFS, "pChestRatio")
+        # box.prop(pFS, "pChestRaise")
+        # box.prop(pFS, "pMaxVerticalAngle")
+        # box.prop(pFS, "pRandom")
+
+class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
+    """Creates a Panel in the Tool Panel"""
+    bl_label = "Simulation Properties"
+    bl_idname = "armature.fsimproppanel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = "FishSim"
@@ -136,38 +270,18 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
             return False
 
     def draw(self, context):
+        #Make sure the presets directory exists
+        add_preset_files()
+        
         layout = self.layout
 
-        obj1 = context.object
         scene = context.scene
-        # row = layout.row()
-        # row.label(text="Active object is: " + obj1.name)
-        #row = layout.row()
-        #row.prop(obj1, "name")
         row = layout.row()
-        row.label("Animation Ranges")
-        row = layout.row()
-        row.prop(scene.FSimMainProps, "fsim_start_frame")
-        row = layout.row()
-        row.prop(scene.FSimMainProps, "fsim_end_frame")
-        row = layout.row()
-        row.operator("armature.fsim_add")
-        row = layout.row()
-        row.operator("armature.fsimulate")
-        row = layout.row()
-        row.operator("armature.fsim_run")
-        #row = layout.row()
-        #row.operator("armature.fsim_populate")
-        box = layout.box()
-        box.label("Multi Sim Options")
-        box.prop(scene.FSimMainProps, "fsim_copyrigs")
-        box.prop(scene.FSimMainProps, "fsim_copymesh")
-        # box.prop(scene.FSimMainProps, "fsim_multisim")
-        box.prop(scene.FSimMainProps, "fsim_maxnum")
-        box.prop(scene.FSimMainProps, "fsim_startangle")
-        pFS = context.scene.FSimProps
-        layout.operator('screen.repeat_last', text="Repeat", icon='FILE_REFRESH' )
+        row.menu("AMATURE_MT_fsim_presets", text=bpy.types.AMATURE_MT_fsim_presets.bl_label)
+        row.operator(AddPresetFSim.bl_idname, text="", icon='ZOOMIN')
+        row.operator(AddPresetFSim.bl_idname, text="", icon='ZOOMOUT').remove_active = True        
         
+        pFS = context.scene.FSimProps
         box = layout.box()
         box.label("Main Parameters")
         box.prop(pFS, "pMass")
@@ -200,8 +314,6 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         box.prop(pFS, "pMaxVerticalAngle")
         box.prop(pFS, "pRandom")
 
-        
-
 
 def register():
     bpy.utils.register_class(FSimMainProps)
@@ -210,6 +322,9 @@ def register():
     from . import FishSim
     FishSim.registerTypes()
     bpy.utils.register_class(ARMATURE_PT_FSim)
+    bpy.utils.register_class(ARMATURE_PT_FSimPropPanel)
+    bpy.utils.register_class(AMATURE_MT_fsim_presets)
+    bpy.utils.register_class(AddPresetFSim)
 
 
 def unregister():
@@ -219,6 +334,9 @@ def unregister():
     from . import FishSim
     FishSim.unregisterTypes()
     bpy.utils.unregister_class(ARMATURE_PT_FSim)
+    bpy.utils.unregister_class(ARMATURE_PT_FSimPropPanel)
+    bpy.utils.unregister_class(AMATURE_MT_fsim_presets)
+    bpy.utils.unregister_class(AddPresetFSim)
 
 
 if __name__ == "__main__":
