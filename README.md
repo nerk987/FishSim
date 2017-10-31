@@ -3,6 +3,8 @@
 #### Fish Swimming Simulation   
 V0.1.0 Initial Release
 
+Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.0/FishSim.zip) 
+
 
 ## Introduction
 Most computer animation is done manually by setting keyframes at key points, and then tweaking intermediate frames. For some types of animation however, it should be possible for the computer to do the detail work once the animator has set up the appropriate environment. Bullet physics and the fracture modifier are examples. Physically based animation!
