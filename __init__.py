@@ -18,11 +18,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: reorganise branch - first split
+# version comment: develop branch - world location + shark preset
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 1, 0),
+    "version": (0, 0, 2),
     "blender": (2, 78, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
@@ -131,7 +131,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
 #UI Panels
 class AMATURE_MT_fsim_presets(Menu):
     bl_label = "FishSim Presets"
-    preset_subdir = "operator/fishsim"
+    preset_subdir = "../addons/fishsim/presets"
     preset_operator = "script.execute_preset"
     COMPAT_ENGINES = {'BLENDER_RENDER', 'CYCLES_RENDER', 'BLENDER_GAME'}
     draw = Menu.draw_preset
@@ -150,32 +150,32 @@ class AddPresetFSim(AddPresetBase, Operator):
     # properties to store in the preset
     preset_values = [
         "pFS.pMass",
-        "pDrag",
-        "pPower",
-        "pMaxFreq",
-        "pMaxTailAngle",
-        "pAngularDrag",
-        "pMaxSteeringAngle",
-        "pTurnAssist",
-        "pLeanIntoTurn",
-        "pEffortGain",
-        "pEffortIntegral",
-        "pEffortRamp",
-        "pMaxTailFinAngle",
-        "pTailFinGain",
-        "pTailFinStiffness",
-        "pTailFinStubRatio",
-        "pMaxSideFinAngle",
-        "pSideFinGain",
-        "pSideFinStiffness",
-        "pChestRatio",
-        "pChestRaise",
-        "pMaxVerticalAngle",
-        "pRandom",
+        "pFS.pDrag",
+        "pFS.pPower",
+        "pFS.pMaxFreq",
+        "pFS.pMaxTailAngle",
+        "pFS.pAngularDrag",
+        "pFS.pMaxSteeringAngle",
+        "pFS.pTurnAssist",
+        "pFS.pLeanIntoTurn",
+        "pFS.pEffortGain",
+        "pFS.pEffortIntegral",
+        "pFS.pEffortRamp",
+        "pFS.pMaxTailFinAngle",
+        "pFS.pTailFinGain",
+        "pFS.pTailFinStiffness",
+        "pFS.pTailFinStubRatio",
+        "pFS.pMaxSideFinAngle",
+        "pFS.pSideFinGain",
+        "pFS.pSideFinStiffness",
+        "pFS.pChestRatio",
+        "pFS.pChestRaise",
+        "pFS.pMaxVerticalAngle",
+        "pFS.pRandom",
         ]
 
     # where to store the preset
-    preset_subdir = "operator/fishsim"
+    preset_subdir = "../addons/fishsim/presets"
 
 class ARMATURE_PT_FSim(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
@@ -219,39 +219,6 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         box.prop(scene.FSimMainProps, "fsim_copymesh")
         box.prop(scene.FSimMainProps, "fsim_maxnum")
         box.prop(scene.FSimMainProps, "fsim_startangle")
-        # pFS = context.scene.FSimProps
-        
-        # box = layout.box()
-        # box.label("Main Parameters")
-        # box.prop(pFS, "pMass")
-        # box.prop(pFS, "pDrag")
-        # box.prop(pFS, "pPower")
-        # box.prop(pFS, "pMaxFreq")
-        # box.prop(pFS, "pMaxTailAngle")
-        # box = layout.box()
-        # box.label("Turning Parameters")
-        # box.prop(pFS, "pAngularDrag")
-        # box.prop(pFS, "pMaxSteeringAngle")
-        # box.prop(pFS, "pTurnAssist")
-        # box.prop(pFS, "pLeanIntoTurn")
-        # box = layout.box()
-        # box.label("Target Tracking")
-        # box.prop(pFS, "pEffortGain")
-        # box.prop(pFS, "pEffortIntegral")
-        # box.prop(pFS, "pEffortRamp")
-        # box = layout.box()
-        # box.label("Fine Tuning")
-        # box.prop(pFS, "pMaxTailFinAngle")
-        # box.prop(pFS, "pTailFinGain")
-        # box.prop(pFS, "pTailFinStiffness")
-        # box.prop(pFS, "pTailFinStubRatio")
-        # box.prop(pFS, "pMaxSideFinAngle")
-        # box.prop(pFS, "pSideFinGain")
-        # box.prop(pFS, "pSideFinStiffness")
-        # box.prop(pFS, "pChestRatio")
-        # box.prop(pFS, "pChestRaise")
-        # box.prop(pFS, "pMaxVerticalAngle")
-        # box.prop(pFS, "pRandom")
 
 class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
     """Creates a Panel in the Tool Panel"""

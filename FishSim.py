@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: reorganise branch - first split
+# version comment: develop branch - world location + progress bar + prints
 
 import bpy
 import mathutils,  math, os
@@ -53,7 +53,7 @@ class FSimProps(bpy.types.PropertyGroup):
     pTurnAssist = FloatProperty(name="TurnAssist", description="Fake Turning effect (0 - 10)", default=3.0, min=0)
     pMaxTailAngle = FloatProperty(name="Max Tail Angle", description="Max tail angle", default=15.0, min=0, max=30.0)
     pMaxSteeringAngle = FloatProperty(name="Max Steering Angle", description="Max steering tail angle", default=15.0, min=0, max=40.0)
-    pMaxVerticalAngle = FloatProperty(name="Max vertical Angle", description="Max steering angle for vertical", default=0.1, min=0, max=40.0)
+    pMaxVerticalAngle = FloatProperty(name="Max Vertical Angle", description="Max steering angle for vertical", default=0.1, min=0, max=40.0)
     pMaxTailFinAngle = FloatProperty(name="Max Tail Fin Angle", description="Max tail fin angle", default=15.0, min=0, max=30.0)
     pTailFinGain = FloatProperty(name="Tail Fin Gain", description="Tail Fin speed of response to movement", default=5.0, min=0, max=25.0)
     pTailFinStiffness = FloatProperty(name="Tail Fin Stiffness", description="Tail Fin Stiffness", default=0.2, min=0, max=1.0)
@@ -105,7 +105,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
                     if 'TargetProxy' in root:
                         self.sArmatures.append(obj.name)
         self.nArmature = len(self.sArmatures) - 1
-        print("List: ", self.sArmatures)
+        # print("List: ", self.sArmatures)
 
     
     def RemoveKeyframes(self, armature, bones):
@@ -227,9 +227,6 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.rMaxTailAngle = pFS.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
         self.rMaxFreq = pFS.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
         
-        #Progress bar
-        wm = context.window_manager
-        wm.progress_begin(0.0,100.0)
         
     def ModalMove(self, context):
         scene = context.scene
@@ -240,7 +237,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
         nFrame = scene.frame_current
         
-        print("Target Rig and Proxy: ", self.sTargetRig.name, self.sTargetProxy.name)
+        # print("Target Rig and Proxy: ", self.sTargetRig.name, self.sTargetProxy.name)
         
         
         #Get the effort and direction change to head toward the target
@@ -366,12 +363,11 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
         #Go to next frame, or finish
         wm = context.window_manager
-        print("Frame: ", nFrame)
+        # print("Frame: ", nFrame)
         if nFrame == endFrame:
-            wm.progress_end()
             return 0
         else:
-            wm.progress_update((nFrame - startFrame)*100.0/(endFrame - startFrame))
+            wm.progress_update((len(self.sArmatures) - self.nArmature)*99.0/len(self.sArmatures))
             context.scene.frame_set(nFrame + 1)
             return 1
         
@@ -392,6 +388,8 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
                     self.BoneMovement(context) 
 
                 else:
+                    wm = context.window_manager
+                    wm.progress_end()
                     return {'CANCELLED'}
 
         return {'PASS_THROUGH'}
@@ -407,6 +405,10 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #Load a list of the relevant armatures
         self.armature_list(scene, sFPM)
         
+        #Progress bar
+        wm = context.window_manager
+        wm.progress_begin(0.0,100.0)
+
         scene.frame_set(sFPM.fsim_start_frame)
         self.BoneMovement(context) 
         wm = context.window_manager
@@ -470,7 +472,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     def CopyChildren(self, scene, src_obj, new_obj):
         for childObj in src_obj.children:
-            print("Copying child: ", childObj.name)
+            # print("Copying child: ", childObj.name)
             new_child = childObj.copy()
             new_child.data = childObj.data.copy()
             new_child.animation_data_clear()
@@ -484,7 +486,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     
     def CopyRigs(self, context):
-        print("Populate")
+        # print("Populate")
         
         scene = context.scene
         src_obj = context.object
@@ -518,7 +520,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 
                 #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
                 if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
-                    print("time to duplicate")
+                    # print("time to duplicate")
 
                     if scene.FSimMainProps.fsim_copyrigs:
                         #If there is not already a matching armature, duplicate the template and update the link field
@@ -526,7 +528,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         new_obj.data = src_obj.data.copy()
                         new_obj.animation_data_clear()
                         scene.objects.link(new_obj)
-                        new_obj.location = obj.location
+                        new_obj.location = obj.matrix_world.to_translation()
                         new_obj.rotation_euler = obj.rotation_euler
                         new_root = new_obj.pose.bones.get('root')
                         new_root['TargetProxy'] = obj.name
@@ -544,16 +546,15 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
                 #If there's already a matching rig, then just update it
                 elif obj["FSim"][-3:] == src_obj.name[:3]:
-                    print("matching armature", armatures[obj.name])
+                    # print("matching armature", armatures[obj.name])
                     TargRig = scene.objects.get(armatures[obj.name])
                     if TargRig is not None:
                         #reposition if required
-                        if scene.FSimMainProps.fsim_multisim:
+                        if scene.FSimMainProps.fsim_copyrigs:
                             TargRig.animation_data_clear()
-                            TargRig.location = obj.location
+                            TargRig.location = obj.matrix_world.to_translation()
                             TargRig.rotation_euler = obj.rotation_euler
                             TargRig.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
-                            print("frame, rig: ", obj.location, TargRig.location)
                         
                         #if no children, and the 'copymesh' flag set, then copy the associated meshes
                         if scene.FSimMainProps.fsim_copymesh and len(TargRig.children) < 1:
