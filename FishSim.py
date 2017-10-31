@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: develop branch - world location + progress bar + prints
+# version comment: develop branch - Rotation Bug
 
 import bpy
 import mathutils,  math, os
@@ -530,6 +530,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         scene.objects.link(new_obj)
                         new_obj.location = obj.matrix_world.to_translation()
                         new_obj.rotation_euler = obj.rotation_euler
+                        new_obj.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
                         new_root = new_obj.pose.bones.get('root')
                         new_root['TargetProxy'] = obj.name
                         new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
