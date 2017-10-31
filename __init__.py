@@ -18,11 +18,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: develop branch - world location + shark preset
+# version comment: V0.1.0 master branch - initial release
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 0, 2),
+    "version": (0, 1, 0),
     "blender": (2, 78, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
@@ -34,10 +34,10 @@ bl_info = {
 if "bpy" in locals():
     import imp
     imp.reload(FishSim)
-    print("Reloaded multifiles")
+    # print("Reloaded multifiles")
 else:
     from . import FishSim
-    print("Imported multifiles")
+    # print("Imported multifiles")
 
 import bpy
 import mathutils,  math, os
@@ -119,8 +119,8 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box.cycles_visibility.diffuse = False
         bound_box.cycles_visibility.shadow = False
         bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
-        if "FSim" in bound_box:
-            print("FSim Found")
+        # if "FSim" in bound_box:
+            # print("FSim Found")
         bound_box.select = False
         #context.active_pose_bone = TargetRoot
         

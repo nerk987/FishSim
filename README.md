@@ -1,11 +1,17 @@
-# Introduction
+# FishSim
+
+#### Fish Swimming Simulation   
+V0.1.0 Initial Release
+
+
+## Introduction
 Most computer animation is done manually by setting keyframes at key points, and then tweaking intermediate frames. For some types of animation however, it should be possible for the computer to do the detail work once the animator has set up the appropriate environment. Bullet physics and the fracture modifier are examples. Physically based animation!
 
 This addon aims to make it easier to animate natural movements of fish by allowing the animation of targets or proxies, and then simulating the movements required for the fish to follow these targets. It would be hard to support every type of rig that could be built for a fish model, but the shark metarig supplied with the built-in rigify addon provides a convenient standard that should be easy to apply to most models.
 
 In the real world, fish often come in large numbers. There is already an impressive addon called Crowdmaster which is designed to move large numbers of objects according to complex strategies.  It's very well suited to setup an initial pattern for a school of fish and then animate the motion according to flocking, path following, object avoiding rules. In fact, it could handle the whole task including specifying armature actions to simulate swimming but the actions would end up somewhat robotic. Instead, it can be used to drive the motion of the targets, and the FishSim addon can then be used to produce realistic swimming physics for the 'actors' to follow the targets. An example crowdmaster setup suitable for this addon is provided. The 'animation nodes' addon is an alternative.
 
-# Workflow summary
+## Workflow summary
 * Create or download a fish model
 * Use the Rigify Shark metarig to rig the model (or download one of the example models)
 * Install and enable the FishSim addon. The FishSim panel will be available while the fish armature is selected
@@ -23,8 +29,8 @@ The above workflow can be used to animate as many fish models as you like. Howev
 * Select the 'Simulate' option again to simulate the swimming action for every matching armature and every target object location. Again tweak the swimming simulation parameters.
 * Select the 'Copy Meshes' option (and untick the other options) and use the 'Copy Models' button to make a copy of the fish mesh object(s) attached to the armatures at every target object location.
 
-# Reference
-## Installation
+## Reference
+### Installation
 It's like just about every other Blender addon. Download the file here:
 
 From the Blender file menu, choose 'User Preferences'. Switch to the 'Add-ons' tab, then select 'Install Add-on from file'. Browse to the location of the downloaded addon zip file. Enable 'FishSim' from the list of add-ons.
@@ -32,13 +38,13 @@ From the Blender file menu, choose 'User Preferences'. Switch to the 'Add-ons' t
 There should be a 'FishSim' tab on the Toolbar to the left of the 3D view whenever an armature is selected in object or pose mode.
 
 
-## Rigify Shark Metarig
+### Rigify Shark Metarig
 
 If you haven't used it, Rigify is a hugely powerful rig generator add-on that is supplied with Blender. When enabled, the 'Add Armature' menu is extended to allow the creation of various metarigs. It now supports a 'Shark' metarig, and after you adjust the metarig to suit your model, Rigify can generate a fully functioning control rig. 
 
 The FishSim add-on doesn't need Rigify to be installed to work, but it does expect the rig to have been generated with Rigify from the standard Shark metarig. You can download a shark model rigged in a suitable way from here:  or make your own. Even if you have a model rigged using a different method, it should be quite easy to re-rig it using Rigify.
 
-## FishSim Tools Panel
+### FishSim Tools Panel
 Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Panel on the left of a 3D view if an armature is selected in Pose or Object mode. The tab contains a 'FishSim' panel and a 'Simulations Properties' panel 
 
 ![Tools Panel](images/FSim_ToolPanel.png)
@@ -63,19 +69,19 @@ Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Pane
 
 >If this option is ticked, when the 'Copy Models' button is pressed the addon will search for every target in the scene that matches the currently selected armature. For each target, a copy of the currently selected armature will be positioned at the target's location and rotation, and linked to follow that target. The armature root bone will be scaled to match the targets scale. If an armature is already linked to that target, it's position, rotation, and root bone scale is re-adjusted to match the target. All of the copied armatures are left selected to make them easier to delete or be moved to other layers.
 
-4.2. Distribute Multiple Copies of meshes.
+>4.2. Distribute Multiple Copies of meshes.
 
 >If this option is ticked, when the 'Copy Models' button is pressed the addon will search for every target in the scene that matches the currently selected armature. For each target that has a linked armature, a copy of all the mesh children of the currently selected armature will be attached to the associated armature and linked.  All of the copied meshes are left selected to make them easier to delete or be moved to other layers.
 
-4.3. Maximum number of copies
+>4.3. Maximum number of copies
 
 >The maximum number of armatures or meshes copied and/or simulated can be limited by this parameter to simplify the process of tuning the swimming action to the animated targets.
 
-4.5. Angle to target
+>4.5. Angle to target
 
 >I found that most of the Crowd Master examples moved the objects in the positive Y direction by default, and Rigify and most models face the negative Y direction. This parameter lets you add a rotation offset when the armatures are attached to the targets. If you find your models start swimming in the opposite direction to the target, put 180.0 in this parameter.
 
-5. Simulation Parameters
+### Simulation Parameters
 
 >Parameters affecting the swimming action of the fish can be found in the 'Simulation Parameters' panel after running the simulation. They can be adjusted as required to allow the model to better follow the target. The parameters are saved with the blend file, and different sets of parameters can be saved using the presets control.
 
@@ -83,7 +89,7 @@ Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Pane
 
 >The 'Mass' and 'Drag' parameters can be adjusted to affect the stopping speed, and the steadiness of the movement.
 
-5.1. Simulation Parameter Reference
+### Simulation Parameter Reference
 
 
 * Mass

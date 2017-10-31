@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: develop branch - Rotation Bug
+# version comment: V0.1.0 master branch - initial release
 
 import bpy
 import mathutils,  math, os
