@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.0 master branch - initial release
+# version comment: V0.1.0 master branch - hotfix 1 - child parent matrix
 
 import bpy
 import mathutils,  math, os
@@ -478,6 +478,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             new_child.animation_data_clear()
             new_child.location = childObj.location - src_obj.location
             new_child.parent = new_obj
+            new_child.matrix_parent_inverse = childObj.matrix_parent_inverse
             scene.objects.link(new_child)
             new_child.select = True
             for mod in new_child.modifiers:
