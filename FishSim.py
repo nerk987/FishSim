@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.0 master branch - initial release
+# version comment: V0.1.1 develop branch - metarig add
 
 import bpy
 import mathutils,  math, os
@@ -216,7 +216,8 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         try:
             self.RemoveKeyframes(TargetRig, [self.sSpine_master, self.sBack_fin1, self.sBack_fin2, self.sChest, self.sSideFinL, self.sSideFinR])
         except:
-            print("info: no keyframes")
+            pass
+            # print("info: no keyframes")
         
         #record to previous tail position
         context.scene.frame_set(startFrame)
@@ -608,7 +609,6 @@ def registerTypes():
     bpy.types.Scene.FSimProps = bpy.props.PointerProperty(type=FSimProps)
     bpy.utils.register_class(ARMATURE_OT_FSim_Run)
     bpy.utils.register_class(ARMATURE_OT_FSimulate)
-    # print("Register2")
 
 def unregisterTypes():
     del bpy.types.Scene.FSimProps

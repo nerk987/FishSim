@@ -18,7 +18,9 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: V0.1.0 master branch - initial release
+
+# version comment: V0.1.1 develop branch - metarig add
+
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
@@ -30,10 +32,12 @@ bl_info = {
     "wiki_url": "",
     "tracker_url": "",
     "category": "Animation"}
+    
 
 if "bpy" in locals():
     import imp
     imp.reload(FishSim)
+    imp.reload(metarig_menu)
     # print("Reloaded multifiles")
 else:
     from . import FishSim
@@ -45,6 +49,9 @@ from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, St
 from random import random
 from bpy.types import Operator, Panel, Menu
 from bl_operators.presets import AddPresetBase
+# import shutil
+
+# print(sys.modules[bpy.types.DATA_PT_rigify_buttons.__module__].__file__)    
 
 def add_preset_files():
     presets   = bpy.utils.user_resource('SCRIPTS', "presets")
@@ -92,6 +99,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
     def execute(self, context):
         #Get the object
         TargetRig = context.object
+        
         if TargetRig.type != "ARMATURE":
             print("Not an Armature", context.object.type)
             return {'CANCELLED'}
@@ -103,7 +111,6 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
             return {'CANCELLED'}
 
         TargetRoot["TargetProxy"] = TargetRig.name + '_proxy'
-            
         #Add the proxy object
         bpy.ops.mesh.primitive_cube_add()
         bound_box = bpy.context.active_object
@@ -288,10 +295,14 @@ def register():
     bpy.utils.register_class(ARMATURE_OT_FSim_Add)
     from . import FishSim
     FishSim.registerTypes()
+    from . import metarig_menu
+    metarig_menu.register()
     bpy.utils.register_class(ARMATURE_PT_FSim)
     bpy.utils.register_class(ARMATURE_PT_FSimPropPanel)
     bpy.utils.register_class(AMATURE_MT_fsim_presets)
     bpy.utils.register_class(AddPresetFSim)
+    # shutil.copytree("")
+    
 
 
 def unregister():
@@ -300,6 +311,8 @@ def unregister():
     bpy.utils.unregister_class(ARMATURE_OT_FSim_Add)
     from . import FishSim
     FishSim.unregisterTypes()
+    from . import metarig_menu
+    metarig_menu.unregister()
     bpy.utils.unregister_class(ARMATURE_PT_FSim)
     bpy.utils.unregister_class(ARMATURE_PT_FSimPropPanel)
     bpy.utils.unregister_class(AMATURE_MT_fsim_presets)
