@@ -1,7 +1,7 @@
 # FishSim
 
 #### Fish Swimming Simulation   
-V0.1.0 Initial Release
+V0.1.1 Initial Release
 
 Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.0/FishSim.zip) 
 

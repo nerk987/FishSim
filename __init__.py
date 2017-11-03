@@ -18,7 +18,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: V0.1.0 master branch - initial release
+# version comment: V0.1.1 master branch - initial release
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",

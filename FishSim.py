@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.0 master branch - hotfix 1 - child parent matrix
+# version comment: V0.1.1 master branch - hotfix 1 - child parent matrix
 
 import bpy
 import mathutils,  math, os
