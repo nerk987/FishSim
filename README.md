@@ -46,6 +46,8 @@ If you haven't used it, Rigify is a hugely powerful rig generator add-on that is
 
 The FishSim add-on doesn't need Rigify to be installed to work, but it does expect the rig to have been generated with Rigify from the standard Shark metarig. You can download a shark model rigged in a suitable way from here:  or make your own. Even if you have a model rigged using a different method, it should be quite easy to re-rig it using Rigify.
 
+One thing I've found with this rig is that it looks better if the 'curvature' parameter on the top and bottom part of the tail fin is set to 1.0 (makes the bendy bones fully bendy). Also the Head, Neck and Tail 'Follow' paramters should be set to 1.0 or at least fairly high.
+
 ### FishSim Tools Panel
 Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Panel on the left of a 3D view if an armature is selected in Pose or Object mode. The tab contains a 'FishSim' panel and a 'Simulations Properties' panel 
 
