@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.1 master branch - hotfix 1 - child parent matrix
+# version comment: V0.1.2 master branch - hotfix 2 - tail angle issue
 
 import bpy
 import mathutils,  math, os
@@ -261,7 +261,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
         #Spine Movement
         self.sState = self.sState + 360.0 / pFS.pFreq
-        xTailAngle = math.sin(math.radians(self.sState))*math.radians(self.rMaxTailAngle) + math.radians(pFS.sTailAngleOffset)
+        xTailAngle = math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle) + math.radians(pFS.sTailAngleOffset)
         #print("TailAngle", xTailAngle)
         self.sSpine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
         self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
