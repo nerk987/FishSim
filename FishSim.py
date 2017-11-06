@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.1 develop branch - start on pec animation
+# version comment: V0.1.1 develop branch - start on pec animation (includes tail angle fix)
 
 import bpy
 import mathutils,  math, os
@@ -55,12 +55,12 @@ class FSimProps(bpy.types.PropertyGroup):
     pMaxSteeringAngle = FloatProperty(name="Max Steering Angle", description="Max steering tail angle", default=15.0, min=0, max=40.0)
     pMaxVerticalAngle = FloatProperty(name="Max Vertical Angle", description="Max steering angle for vertical", default=0.1, min=0, max=40.0)
     pMaxTailFinAngle = FloatProperty(name="Max Tail Fin Angle", description="Max tail fin angle", default=15.0, min=0, max=30.0)
-    pTailFinGain = FloatProperty(name="Tail Fin Gain", description="Tail Fin speed of response to movement", default=5.0, min=0, max=25.0)
-    pTailFinStiffness = FloatProperty(name="Tail Fin Stiffness", description="Tail Fin Stiffness", default=0.2, min=0, max=1.0)
+    pTailFinPhase = FloatProperty(name="Tail Fin Phase", description="Tail Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
+    pTailFinStiffness = FloatProperty(name="Tail Fin Stiffness", description="Tail Fin Stiffness", default=1.0, min=0, max=2.0)
     pTailFinStubRatio = FloatProperty(name="Tail Fin Stub Ratio", description="Ratio for the bottom part of the tail", default=0.3, min=0, max=3.0)
     pMaxSideFinAngle = FloatProperty(name="Max Side Fin Angle", description="Max side fin angle", default=15.0, min=0, max=60.0)
-    pSideFinGain = FloatProperty(name="Side Fin Gain", description="Side Fin speed of response to movement", default=2.0, min=0, max=100.0)
-    pSideFinStiffness = FloatProperty(name="Side Fin Stiffness", description="Side Fin Stiffness", default=0.2, min=0, max=10.0)
+    pSideFinPhase = FloatProperty(name="Side Fin Phase", description="Side Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
+    # pSideFinStiffness = FloatProperty(name="Side Fin Stiffness", description="Side Fin Stiffness", default=0.2, min=0, max=10.0)
     pChestRatio = FloatProperty(name="Chest Ratio", description="Ratio of the front of the fish to the rear", default=0.5, min=0, max=2.0)
     pChestRaise = FloatProperty(name="Chest Raise Factor", description="Chest raises during turning", default=1.0, min=0, max=20.0)
     pLeanIntoTurn = FloatProperty(name="LeanIntoTurn", description="Amount it leans into the turns", default=1.0, min=0, max=20.0)
@@ -265,7 +265,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
         self.PecSimulation(nFrame, pFS)
         
-        pecTest = 1
+        pecTest = 0
         if pecTest == 0:
             
             #Get the effort and direction change to head toward the target
@@ -289,7 +289,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
             
             #Spine Movement
             self.sState = self.sState + 360.0 / pFS.pFreq
-            xTailAngle = math.sin(math.radians(self.sState))*math.radians(self.rMaxTailAngle) + math.radians(pFS.sTailAngleOffset)
+            xTailAngle = math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle) + math.radians(pFS.sTailAngleOffset)
             #print("TailAngle", xTailAngle)
             self.sSpine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
             self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
@@ -300,71 +300,102 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
             self.sChest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             self.sTorso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             #context.scene.update()
-
-            #Tail Movment
+            
+            #
+            # -- Old Tail Section --
+            #
+            # #Tail Movment
             if (nFrame == startFrame):
                 back_fin_dif = 0
             else:
                 back_fin_dif = (self.sBack_fin_middle.matrix.decompose()[0].x - self.sOld_back_fin.x)
             self.sOld_back_fin = self.sBack_fin_middle.matrix.decompose()[0]
         
-            #Tail Fin angle based on Tail movement
-            pMaxTailScale = pFS.pMaxTailFinAngle * 0.4 / 30.0
-            currentTailScale = self.sBack_fin1.scale[1]
-            if (back_fin_dif < 0) :
-                TailScaleIncr = (1 + pMaxTailScale - currentTailScale) * pFS.pTailFinGain * math.fabs(back_fin_dif)
-                #print("Positive scale: ", TailScaleIncr)
-            else:
-                TailScaleIncr = (1 - pMaxTailScale - currentTailScale) * pFS.pTailFinGain * math.fabs(back_fin_dif)
-                #print("Negative scale: ", TailScaleIncr)
+            # #Tail Fin angle based on Tail movement
+            # pMaxTailScale = pFS.pMaxTailFinAngle * 0.4 / 30.0
+            # currentTailScale = self.sBack_fin1.scale[1]
+            # if (back_fin_dif < 0) :
+                # TailScaleIncr = (1 + pMaxTailScale - currentTailScale) * pFS.pTailFinGain * math.fabs(back_fin_dif)
+                # #print("Positive scale: ", TailScaleIncr)
+            # else:
+                # TailScaleIncr = (1 - pMaxTailScale - currentTailScale) * pFS.pTailFinGain * math.fabs(back_fin_dif)
+                # #print("Negative scale: ", TailScaleIncr)
             
-            #Tail Fin stiffness factor
-            TailFinStiffnessIncr = (1 - currentTailScale) * pFS.pTailFinStiffness
+            # #Tail Fin stiffness factor
+            # TailFinStiffnessIncr = (1 - currentTailScale) * pFS.pTailFinStiffness
             
-            if (nFrame == startFrame):
-                self.sBack_fin1_scale = 1.0
-            else:
-                self.sBack_fin1_scale = self.sBack_fin1.scale[1] + TailScaleIncr + TailFinStiffnessIncr
+            # if (nFrame == startFrame):
+                # self.sBack_fin1_scale = 1.0
+            # else:
+                # self.sBack_fin1_scale = self.sBack_fin1.scale[1] + TailScaleIncr + TailFinStiffnessIncr
                 
-            #Limit Tail Fin maximum deflection    
-            if (self.sBack_fin1_scale > (pMaxTailScale + 1)):
-                self.sBack_fin1_scale = pMaxTailScale + 1
-            if (self.sBack_fin1_scale < (-pMaxTailScale + 1)):
-                self.sBack_fin1_scale = -pMaxTailScale + 1
+            # #Limit Tail Fin maximum deflection    
+            # if (self.sBack_fin1_scale > (pMaxTailScale + 1)):
+                # self.sBack_fin1_scale = pMaxTailScale + 1
+            # if (self.sBack_fin1_scale < (-pMaxTailScale + 1)):
+                # self.sBack_fin1_scale = -pMaxTailScale + 1
+            # self.sBack_fin1.scale[1] = self.sBack_fin1_scale
+            # self.sBack_fin2.scale[1] = 1 - (1 - self.sBack_fin1_scale) * pFS.pTailFinStubRatio
+            # #scene.update()
+            # #print("New Scale:", self.sBack_fin1.scale[1])
+            # self.sBack_fin1.keyframe_insert(data_path='scale',  frame=(nFrame))
+            # self.sBack_fin2.keyframe_insert(data_path='scale',  frame=(nFrame))
+            
+            #
+            # -- New tail section --
+            #
+            #Tailfin based on phase offset
+            pMaxTailScale = pFS.pMaxTailFinAngle * ( 1.0 / pFS.pTailFinStiffness) * 0.2 / 30.0
+            
+            self.sBack_fin1_scale = 1.0 + math.sin(math.radians(self.sState + pFS.pTailFinPhase)) * pMaxTailScale
+            
             self.sBack_fin1.scale[1] = self.sBack_fin1_scale
             self.sBack_fin2.scale[1] = 1 - (1 - self.sBack_fin1_scale) * pFS.pTailFinStubRatio
-            #scene.update()
-            #print("New Scale:", self.sBack_fin1.scale[1])
             self.sBack_fin1.keyframe_insert(data_path='scale',  frame=(nFrame))
             self.sBack_fin2.keyframe_insert(data_path='scale',  frame=(nFrame))
             
-            #Side Fin angle based on Tail movement
-            pMaxSideFinAngle = pFS.pMaxSideFinAngle
-            currentSideFinRot = math.degrees(self.sSideFinL.rotation_quaternion.to_euler().x)
-            if (back_fin_dif < 0) :
-                SideIncr = (pMaxSideFinAngle - currentSideFinRot) * pFS.pSideFinGain * math.fabs(back_fin_dif)
-                #print("Side Positive scale: ", SideIncr)
-            else:
-                SideIncr = (-pMaxSideFinAngle - currentSideFinRot) * pFS.pSideFinGain * math.fabs(back_fin_dif)
-                #print("Side Negative scale: ", SideIncr)
+            #
+            # -- end tail section --
+            #
             
-            #Side Fin stiffness factor
-            SideFinStiffnessIncr = -currentSideFinRot * pFS.pSideFinStiffness
+            # #Side Fin angle based on Tail movement
+            # pMaxSideFinAngle = pFS.pMaxSideFinAngle
+            # currentSideFinRot = math.degrees(self.sSideFinL.rotation_quaternion.to_euler().x)
+            # if (back_fin_dif < 0) :
+                # SideIncr = (pMaxSideFinAngle - currentSideFinRot) * pFS.pSideFinGain * math.fabs(back_fin_dif)
+                # #print("Side Positive scale: ", SideIncr)
+            # else:
+                # SideIncr = (-pMaxSideFinAngle - currentSideFinRot) * pFS.pSideFinGain * math.fabs(back_fin_dif)
+                # #print("Side Negative scale: ", SideIncr)
             
-            if (nFrame == startFrame):
-                SideFinRot = 0.0
-            else:
-                SideFinRot = currentSideFinRot + SideIncr + SideFinStiffnessIncr
-                #print("Current, incr, stiff: ", currentSideFinRot, SideIncr, SideFinStiffnessIncr)
+            # #Side Fin stiffness factor
+            # SideFinStiffnessIncr = -currentSideFinRot * pFS.pSideFinStiffness
+            
+            # if (nFrame == startFrame):
+                # SideFinRot = 0.0
+            # else:
+                # SideFinRot = currentSideFinRot + SideIncr + SideFinStiffnessIncr
+                # #print("Current, incr, stiff: ", currentSideFinRot, SideIncr, SideFinStiffnessIncr)
 
-            #Limit Side Fin maximum deflection    
-            if (SideFinRot > pMaxSideFinAngle):
-                SideFinRot = pMaxSideFinAngle
-            if (SideFinRot < -pMaxSideFinAngle):
-                SideFinRot = -pMaxSideFinAngle
+            # #Limit Side Fin maximum deflection    
+            # if (SideFinRot > pMaxSideFinAngle):
+                # SideFinRot = pMaxSideFinAngle
+            # if (SideFinRot < -pMaxSideFinAngle):
+                # SideFinRot = -pMaxSideFinAngle
+                
+            #
+            # -- New Side fin section
+            #
+            
+            SideFinRot = math.sin(math.radians(self.sState + pFS.pSideFinPhase)) * pFS.pMaxSideFinAngle
+            
+            #
+            # -- End new sidefin section
+            #
+            
             self.sSideFinL.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(-SideFinRot))
             self.sSideFinR.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(SideFinRot))
-            #scene.update()
+           
             self.sSideFinL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             self.sSideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
             

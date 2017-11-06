@@ -169,12 +169,12 @@ class AddPresetFSim(AddPresetBase, Operator):
         "pFS.pEffortIntegral",
         "pFS.pEffortRamp",
         "pFS.pMaxTailFinAngle",
-        "pFS.pTailFinGain",
+        "pFS.pTailFinPhase",
         "pFS.pTailFinStiffness",
         "pFS.pTailFinStubRatio",
         "pFS.pMaxSideFinAngle",
-        "pFS.pSideFinGain",
-        "pFS.pSideFinStiffness",
+        "pFS.pSideFinPhase",
+        # "pFS.pSideFinStiffness",
         "pFS.pChestRatio",
         "pFS.pChestRaise",
         "pFS.pMaxVerticalAngle",
@@ -424,12 +424,12 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         box = layout.box()
         box.label("Fine Tuning")
         box.prop(pFS, "pMaxTailFinAngle")
-        box.prop(pFS, "pTailFinGain")
+        box.prop(pFS, "pTailFinPhase")
         box.prop(pFS, "pTailFinStiffness")
         box.prop(pFS, "pTailFinStubRatio")
         box.prop(pFS, "pMaxSideFinAngle")
-        box.prop(pFS, "pSideFinGain")
-        box.prop(pFS, "pSideFinStiffness")
+        box.prop(pFS, "pSideFinPhase")
+        # box.prop(pFS, "pSideFinStiffness")
         box.prop(pFS, "pChestRatio")
         box.prop(pFS, "pChestRaise")
         box.prop(pFS, "pMaxVerticalAngle")
