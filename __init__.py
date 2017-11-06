@@ -18,7 +18,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: V0.1.1 master branch - initial release
+# version comment: V0.1.3 master branch - Tail tip movement change
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
@@ -162,12 +162,12 @@ class AddPresetFSim(AddPresetBase, Operator):
         "pFS.pEffortIntegral",
         "pFS.pEffortRamp",
         "pFS.pMaxTailFinAngle",
-        "pFS.pTailFinGain",
+        "pFS.pTailFinPhase",
         "pFS.pTailFinStiffness",
         "pFS.pTailFinStubRatio",
         "pFS.pMaxSideFinAngle",
-        "pFS.pSideFinGain",
-        "pFS.pSideFinStiffness",
+        "pFS.pSideFinPhase",
+        # "pFS.pSideFinStiffness",
         "pFS.pChestRatio",
         "pFS.pChestRaise",
         "pFS.pMaxVerticalAngle",
@@ -270,12 +270,12 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         box = layout.box()
         box.label("Fine Tuning")
         box.prop(pFS, "pMaxTailFinAngle")
-        box.prop(pFS, "pTailFinGain")
+        box.prop(pFS, "pTailFinPhase")
         box.prop(pFS, "pTailFinStiffness")
         box.prop(pFS, "pTailFinStubRatio")
         box.prop(pFS, "pMaxSideFinAngle")
-        box.prop(pFS, "pSideFinGain")
-        box.prop(pFS, "pSideFinStiffness")
+        box.prop(pFS, "pSideFinPhase")
+        # box.prop(pFS, "pSideFinStiffness")
         box.prop(pFS, "pChestRatio")
         box.prop(pFS, "pChestRaise")
         box.prop(pFS, "pMaxVerticalAngle")
