@@ -254,8 +254,18 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         #If there is not already a matching armature, duplicate the template and update the link field
                         new_obj = src_obj.copy()
                         new_obj.data = src_obj.data.copy()
-                        new_obj.animation_data_clear()
+                        # new_obj.animation_data_clear()
                         scene.objects.link(new_obj)
+                        
+                        #Unlink from original action
+                        new_obj.animation_data.action = None
+                        
+                        #Update drivers with new rig id
+                        for dr in new_obj.animation_data.drivers:                            
+                            for v1 in dr.driver.variables:
+                                print("ID: ", v1.targets[0].id)
+                                v1.targets[0].id = new_obj
+                                
                         new_obj.location = obj.matrix_world.to_translation()
                         new_obj.rotation_euler = obj.rotation_euler
                         new_obj.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
@@ -265,9 +275,6 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         scene.objects.active = new_obj
                         new_obj.select = True
                         src_obj.select = False
-                        # if scene.FSimMainProps.fsim_multisim and new_obj.name != src_obj.name:
-                            # # self.BoneMovement(new_obj, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
-                            # bpy.ops.armature.fsimulate()
                         
                         #if 'CopyMesh' is selected duplicate the dependents and re-link
                         if scene.FSimMainProps.fsim_copymesh:
@@ -280,10 +287,12 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                     if TargRig is not None:
                         #reposition if required
                         if scene.FSimMainProps.fsim_copyrigs:
-                            TargRig.animation_data_clear()
+                            # TargRig.animation_data_clear()
                             TargRig.location = obj.matrix_world.to_translation()
                             TargRig.rotation_euler = obj.rotation_euler
                             TargRig.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
+                            TargRig.keyframe_insert(data_path='rotation_euler',  frame=(scene.FSimMainProps.fsim_start_frame))
+                            TargRig.keyframe_insert(data_path='location',  frame=(scene.FSimMainProps.fsim_start_frame))
                         
                         #if no children, and the 'copymesh' flag set, then copy the associated meshes
                         if scene.FSimMainProps.fsim_copymesh and len(TargRig.children) < 1:
