@@ -179,6 +179,11 @@ class AddPresetFSim(AddPresetBase, Operator):
         "pFS.pChestRaise",
         "pFS.pMaxVerticalAngle",
         "pFS.pRandom",
+        "pMaxPecFreq",
+        "pMaxPecAngle",
+        "pPecPhase",
+        "pPecStubRatio",
+        "pPecStiffness",
         ]
 
     # where to store the preset
@@ -447,7 +452,10 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         box.label("Pectoral Fin")
         box.prop(pFS, "pMaxPecFreq")
         box.prop(pFS, "pMaxPecAngle")
-        
+        box.prop(pFS, "pPecPhase")
+        box.prop(pFS, "pPecStubRatio")
+        box.prop(pFS, "pPecStiffness")
+       
 
 
 def register():
