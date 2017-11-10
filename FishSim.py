@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.3 master branch - Tail tip movement change
+# version comment: V0.1.4 master branch - release candidate
 
 import bpy
 import mathutils,  math, os
@@ -58,7 +58,7 @@ class FSimProps(bpy.types.PropertyGroup):
     pTailFinPhase = FloatProperty(name="Tail Fin Phase", description="Tail Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
     pTailFinStiffness = FloatProperty(name="Tail Fin Stiffness", description="Tail Fin Stiffness", default=1.0, min=0, max=2.0)
     pTailFinStubRatio = FloatProperty(name="Tail Fin Stub Ratio", description="Ratio for the bottom part of the tail", default=0.3, min=0, max=3.0)
-    pMaxSideFinAngle = FloatProperty(name="Max Side Fin Angle", description="Max side fin angle", default=15.0, min=0, max=60.0)
+    pMaxSideFinAngle = FloatProperty(name="Max Side Fin Angle", description="Max side fin angle", default=5.0, min=0, max=60.0)
     pSideFinPhase = FloatProperty(name="Side Fin Phase", description="Side Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
     # pSideFinStiffness = FloatProperty(name="Side Fin Stiffness", description="Side Fin Stiffness", default=0.2, min=0, max=10.0)
     pChestRatio = FloatProperty(name="Chest Ratio", description="Ratio of the front of the fish to the rear", default=0.5, min=0, max=2.0)
@@ -66,7 +66,12 @@ class FSimProps(bpy.types.PropertyGroup):
     pLeanIntoTurn = FloatProperty(name="LeanIntoTurn", description="Amount it leans into the turns", default=1.0, min=0, max=20.0)
     pRandom = FloatProperty(name="Random", description="Random amount", default=0.25, min=0, max=1.0)
 
-    
+    # #Pectoral Fin Properties
+    # pMaxPecFreq = FloatProperty(name="Pectoral Stroke Period", description="Maximum frequency of pectoral fin movement in frames per cycle", default=10.0, min=0)
+    # pMaxPecAngle = FloatProperty(name="Max Pec Fin Angle", description="Max Pectoral Fin Angle", default=20.0, min=0, max=80)
+    # pPecPhase = FloatProperty(name="Pec Fin Tip Phase", description="How far the fin tip lags behind the main movement in degrees", default=90.0, min=0, max=180)
+    # pPecStubRatio = FloatProperty(name="Pectoral Stub Ratio", description="Ratio for the bottom part of the pectoral fin", default=0.7, min=0, max=2)
+    # pPecStiffness = FloatProperty(name="Pec Fin Stiffness", description="Pectoral fin stiffness, with 1.0 being very stiff", default=0.7, min=0, max=2)
     
     
 class ARMATURE_OT_FSimulate(bpy.types.Operator):
@@ -85,7 +90,16 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
     sChest = None
     sSideFinL = None
     sSideFinR = None
+    # #pecs
+    # sPecFinTopL = None
+    # sPecFinTopR = None
+    # sPecFinBottomL = None
+    # sPecFinBottomR = None
+    # sPecFinPalmL = None
+    # sPecFinPalmR = None
     sState = 0.0
+    # sPecState = 0.0
+    # sPec_scale = 1.0
     sAngularForceV = 0.0
     sTargetProxy = None
     rMaxTailAngle = 0.0
@@ -180,7 +194,10 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         endFrame = pFSM.fsim_end_frame
         
         #Get the current Target Rig
+        # try:
         TargetRig = scene.objects.get(self.sArmatures[self.nArmature])
+        # except IndexError:
+            # TargetRig = None
         self.sTargetRig = TargetRig
     
         #Check the required Rigify bones are present
@@ -198,9 +215,18 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
             print("Not an Suitable Rigify Armature")
             return 0,0
             
+        # # Pectoral fins if they exist
+        # self.sPecFinTopL = TargetRig.pose.bones.get("t_master.L")
+        # self.sPecFinTopR = TargetRig.pose.bones.get("t_master.R")
+        # self.sPecFinBottomL = TargetRig.pose.bones.get("b_master.L")
+        # self.sPecFinBottomR = TargetRig.pose.bones.get("b_master.R")
+        # self.sPecFinPalmL = TargetRig.pose.bones.get("pec_palm.L")
+        # self.sPecFinPalmR = TargetRig.pose.bones.get("pec_palm.R")
+            
         #initialise state variabiles
         self.sState = 0.0
         self.AngularForceV = 0.0
+        # self.sPecState = 0.0
             
         #Get TargetProxy object details
         try:
@@ -216,7 +242,8 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         try:
             self.RemoveKeyframes(TargetRig, [self.sSpine_master, self.sBack_fin1, self.sBack_fin2, self.sChest, self.sSideFinL, self.sSideFinR])
         except:
-            print("info: no keyframes")
+            pass
+            # print("info: no keyframes")
         
         #record to previous tail position
         context.scene.frame_set(startFrame)
@@ -227,6 +254,34 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.rMaxTailAngle = pFS.pMaxTailAngle * (1 + (random() * 2.0 - 1.0) * rFact)
         self.rMaxFreq = pFS.pMaxFreq * (1 + (random() * 2.0 - 1.0) * rFact)
         
+    # def PecSimulation(self, nFrame, pFS):
+        # print("Pecs")
+        # if self.sPecFinTopL == None or self.sPecFinTopL == None:
+            # return
+        # self.sPecState = self.sPecState + 360.0 / pFS.pMaxPecFreq
+        # xPecAngle = math.sin(math.radians(self.sPecState))*math.radians(pFS.pMaxPecAngle)
+        # print("XPecAngle: ", xPecAngle)
+        # self.sPecFinPalmL.rotation_quaternion = mathutils.Quaternion((1.0, 0.0, 0.0), xPecAngle)
+        # self.sPecFinPalmL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        # #Tip deflection based on phase offset
+        # xMaxPecScale = pFS.pMaxPecAngle * ( 1.0 / pFS.pPecStiffness) * 0.2 / 30.0
+        
+        # self.sPec_scale = 1.0 + math.sin(math.radians(self.sPecState - pFS.pPecPhase)) * xMaxPecScale
+        
+        # self.sPecFinTopL.scale[1] = self.sPec_scale
+        # self.sPecFinBottomL.scale[1] = 1 - (1 - self.sPec_scale) * pFS.pPecStubRatio
+        # self.sPecFinTopL.keyframe_insert(data_path='scale',  frame=(nFrame))
+        # self.sPecFinBottomL.keyframe_insert(data_path='scale',  frame=(nFrame))
+
+        # #copy to the right fin
+        # self.sPecFinPalmR.rotation_quaternion = mathutils.Quaternion((1.0, 0.0, 0.0), xPecAngle)
+        # self.sPecFinPalmR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        # self.sPecFinTopR.scale[1] = self.sPec_scale
+        # self.sPecFinBottomR.scale[1] = 1 - (1 - self.sPec_scale) * pFS.pPecStubRatio
+        # self.sPecFinTopR.keyframe_insert(data_path='scale',  frame=(nFrame))
+        # self.sPecFinBottomR.keyframe_insert(data_path='scale',  frame=(nFrame))
+
+       
         
     def ModalMove(self, context):
         scene = context.scene
@@ -237,8 +292,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
         nFrame = scene.frame_current
         
-        # print("Target Rig and Proxy: ", self.sTargetRig.name, self.sTargetProxy.name)
-        
+        # self.PecSimulation(nFrame, pFS)
         
         #Get the effort and direction change to head toward the target
         RqdEffort, RqdDirection, RqdDirectionV = self.Target(self.sTargetRig, self.sTargetProxy)
@@ -272,7 +326,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sChest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         self.sTorso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         #context.scene.update()
-
+        
         #
         # -- Old Tail Section --
         #
@@ -364,10 +418,10 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #
         # -- End new sidefin section
         #
-            
+        
         self.sSideFinL.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(-SideFinRot))
         self.sSideFinR.rotation_quaternion = mathutils.Quaternion((1,0,0), math.radians(SideFinRot))
-        #scene.update()
+       
         self.sSideFinL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         self.sSideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         
@@ -451,201 +505,53 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         wm = context.window_manager
         wm.event_timer_remove(self._timer)
 
-    def draw(self, context):
-        pFS = context.scene.FSimProps
-        layout = self.layout
-        layout.operator('screen.repeat_last', text="Repeat", icon='FILE_REFRESH' )
+    # def draw(self, context):
+        # pFS = context.scene.FSimProps
+        # layout = self.layout
+        # layout.operator('screen.repeat_last', text="Repeat", icon='FILE_REFRESH' )
         
-        box = layout.box()
-        box.label("Main Parameters")
-        box.prop(pFS, "pMass")
-        box.prop(pFS, "pDrag")
-        box.prop(pFS, "pPower")
-        box.prop(pFS, "pMaxFreq")
-        box.prop(pFS, "pMaxTailAngle")
-        box = layout.box()
-        box.label("Turning Parameters")
-        box.prop(pFS, "pAngularDrag")
-        box.prop(pFS, "pMaxSteeringAngle")
-        box.prop(pFS, "pTurnAssist")
-        box.prop(pFS, "pLeanIntoTurn")
-        box = layout.box()
-        box.label("Target Tracking")
-        box.prop(pFS, "pEffortGain")
-        box.prop(pFS, "pEffortIntegral")
-        box.prop(pFS, "pEffortRamp")
-        box = layout.box()
-        box.label("Fine Tuning")
-        box.prop(pFS, "pMaxTailFinAngle")
-        box.prop(pFS, "pTailFinGain")
-        box.prop(pFS, "pTailFinStiffness")
-        box.prop(pFS, "pTailFinStubRatio")
-        box.prop(pFS, "pMaxSideFinAngle")
-        box.prop(pFS, "pSideFinGain")
-        box.prop(pFS, "pSideFinStiffness")
-        box.prop(pFS, "pChestRatio")
-        box.prop(pFS, "pChestRaise")
-        box.prop(pFS, "pMaxVerticalAngle")
-        box.prop(pFS, "pRandom")
+        # box = layout.box()
+        # box.label("Main Parameters")
+        # box.prop(pFS, "pMass")
+        # box.prop(pFS, "pDrag")
+        # box.prop(pFS, "pPower")
+        # box.prop(pFS, "pMaxFreq")
+        # box.prop(pFS, "pMaxTailAngle")
+        # box = layout.box()
+        # box.label("Turning Parameters")
+        # box.prop(pFS, "pAngularDrag")
+        # box.prop(pFS, "pMaxSteeringAngle")
+        # box.prop(pFS, "pTurnAssist")
+        # box.prop(pFS, "pLeanIntoTurn")
+        # box = layout.box()
+        # box.label("Target Tracking")
+        # box.prop(pFS, "pEffortGain")
+        # box.prop(pFS, "pEffortIntegral")
+        # box.prop(pFS, "pEffortRamp")
+        # box = layout.box()
+        # box.label("Fine Tuning")
+        # box.prop(pFS, "pMaxTailFinAngle")
+        # box.prop(pFS, "pTailFinGain")
+        # box.prop(pFS, "pTailFinStiffness")
+        # box.prop(pFS, "pTailFinStubRatio")
+        # box.prop(pFS, "pMaxSideFinAngle")
+        # box.prop(pFS, "pSideFinGain")
+        # box.prop(pFS, "pSideFinStiffness")
+        # box.prop(pFS, "pChestRatio")
+        # box.prop(pFS, "pChestRaise")
+        # box.prop(pFS, "pMaxVerticalAngle")
+        # box.prop(pFS, "pRandom")
 
-
-class ARMATURE_OT_FSim_Run(bpy.types.Operator):
-    """Simulate and add keyframes for the armature to make it swim towards the target"""
-    bl_label = "Copy Models"
-    bl_idname = "armature.fsim_run"
-    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    
-    # add_preset_files()
-    
-    root = None
-
-    
-
-    def CopyChildren(self, scene, src_obj, new_obj):
-        for childObj in src_obj.children:
-            # print("Copying child: ", childObj.name)
-            new_child = childObj.copy()
-            new_child.data = childObj.data.copy()
-            new_child.animation_data_clear()
-            new_child.location = childObj.location - src_obj.location
-            new_child.parent = new_obj
-            new_child.matrix_parent_inverse = childObj.matrix_parent_inverse
-            scene.objects.link(new_child)
-            new_child.select = True
-            for mod in new_child.modifiers:
-                if mod.type == "ARMATURE":
-                    mod.object = new_obj
-
-    
-    def CopyRigs(self, context):
-        # print("Populate")
-        
-        scene = context.scene
-        src_obj = context.object
-        if src_obj.type != 'ARMATURE':
-            return {'CANCELLED'}
-        src_obj.select = False
-        
-        #make a list of armatures
-        armatures = {}
-        for obj in scene.objects:
-            if obj.type == "ARMATURE" and obj.name[:3] == src_obj.name[:3]:
-                root = obj.pose.bones.get("root")
-                if root != None:
-                    if 'TargetProxy' in root:
-                        proxyName = root['TargetProxy']
-                        if len(proxyName) > 1:
-                            armatures[proxyName] = obj.name
-        
-        #for each target...
-        obj_count = 0
-        for obj in scene.objects:
-            if "FSim" in obj and (obj["FSim"][-3:] == src_obj.name[:3]):
-                #Limit the maximum copy number
-                if obj_count >= scene.FSimMainProps.fsim_maxnum:
-                    return  {'FINISHED'}
-                obj_count += 1
-                
-                #Go back to the first frame to make sure the rigs are placed correctly
-                scene.frame_set(scene.FSimMainProps.fsim_start_frame)
-                scene.update()
-                
-                #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
-                if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
-                    # print("time to duplicate")
-
-                    if scene.FSimMainProps.fsim_copyrigs:
-                        #If there is not already a matching armature, duplicate the template and update the link field
-                        new_obj = src_obj.copy()
-                        new_obj.data = src_obj.data.copy()
-                        new_obj.animation_data_clear()
-                        scene.objects.link(new_obj)
-                        new_obj.location = obj.matrix_world.to_translation()
-                        new_obj.rotation_euler = obj.rotation_euler
-                        new_obj.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
-                        new_root = new_obj.pose.bones.get('root')
-                        new_root['TargetProxy'] = obj.name
-                        new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
-                        scene.objects.active = new_obj
-                        new_obj.select = True
-                        src_obj.select = False
-                        # if scene.FSimMainProps.fsim_multisim and new_obj.name != src_obj.name:
-                            # # self.BoneMovement(new_obj, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
-                            # bpy.ops.armature.fsimulate()
-                        
-                        #if 'CopyMesh' is selected duplicate the dependents and re-link
-                        if scene.FSimMainProps.fsim_copymesh:
-                            self.CopyChildren(scene, src_obj, new_obj)
-
-                #If there's already a matching rig, then just update it
-                elif obj["FSim"][-3:] == src_obj.name[:3]:
-                    # print("matching armature", armatures[obj.name])
-                    TargRig = scene.objects.get(armatures[obj.name])
-                    if TargRig is not None:
-                        #reposition if required
-                        if scene.FSimMainProps.fsim_copyrigs:
-                            TargRig.animation_data_clear()
-                            TargRig.location = obj.matrix_world.to_translation()
-                            TargRig.rotation_euler = obj.rotation_euler
-                            TargRig.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
-                        
-                        #if no children, and the 'copymesh' flag set, then copy the associated meshes
-                        if scene.FSimMainProps.fsim_copymesh and len(TargRig.children) < 1:
-                            self.CopyChildren(scene, src_obj, TargRig)
-                        
-                        #Leave the just generated objects selected
-                        scene.objects.active = TargRig
-                        TargRig.select = True
-                        src_obj.select = False
-                        for childObj in TargRig.children:
-                            childObj.select = True
-                        for childObj in src_obj.children:
-                            childObj.select = False
-
-                        # #Animate
-                        # if scene.FSimMainProps.fsim_multisim and TargRig.name != src_obj.name:
-                            # # self.BoneMovement(TargRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
-                            # bpy.ops.armature.fsimulate()
-                
-            
-
-
-        
-    def execute(self, context):
-        #Get the object
-        TargetRig = context.object
-        scene = context.scene
-        scene.FSimMainProps.fsim_targetrig = TargetRig.name
-        scene = context.scene
-        if TargetRig.type != "ARMATURE":
-            print("Not an Armature", context.object.type)
-            return  {'FINISHED'}
-       
-        # print("Call test")
-        # bpy.ops.armature.fsim_test()
-        
-        if scene.FSimMainProps.fsim_copyrigs or scene.FSimMainProps.fsim_copymesh:
-            self.CopyRigs(context)
-        # else:
-            # # self.BoneMovement(TargetRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)   
-            # bpy.ops.armature.fsimulate()
-        
-        return {'FINISHED'}
-
-        
 
 
 def registerTypes():
     bpy.utils.register_class(FSimProps)
     bpy.types.Scene.FSimProps = bpy.props.PointerProperty(type=FSimProps)
-    bpy.utils.register_class(ARMATURE_OT_FSim_Run)
     bpy.utils.register_class(ARMATURE_OT_FSimulate)
-    # print("Register2")
 
 def unregisterTypes():
     del bpy.types.Scene.FSimProps
     bpy.utils.unregister_class(FSimProps)
-    bpy.utils.unregister_class(ARMATURE_OT_FSim_Run)
     bpy.utils.unregister_class(ARMATURE_OT_FSimulate)
 
 

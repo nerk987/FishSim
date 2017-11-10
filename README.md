@@ -1,7 +1,7 @@
 # FishSim
 
 #### Fish Swimming Simulation   
-V0.1.1 Initial Release
+V0.1.0 Initial Release
 
 Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.0/FishSim.zip) 
 
@@ -148,13 +148,13 @@ Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Pane
 
 >The maximum angle in degrees that the tip and the top of the tail fin can move due to water resistance as the tail goes from side to side. Combined with the Tail Fin Gain and Tail Fin Stiffness parameters determines how stiff or floppy the tail fin is.
 
-* Tail Fin Gain
+* Tail Fin Tail Fin Phase
 
->This parameter represents the drag of the tail fin tip. A value of 0.0 will mean the tail fin is unaffected by the movement to and fro. A high value will cause the fin tip to bend up to the 'Max Tail Fin Angle' due to the water pressure.
+>This parameter represents the drag of the tail fin tip. The tip of the tail fin will lag behind the main part of the fin, and this lag is represented in degrees. 90 degrees should be about right, but it can be adjusted a bit up or down if the 'floppiness' of the tail fin doesn't look right.
 
 * Tail Fin Stiffness
 
->The stiffness is the force trying to return the fin tip to the original shape, so a high value will return the fin tip to straight quickly after the water pressure effect stops.
+>The stiffness is the force trying to return the fin tip to the original shape. A value of 1.0 will be very stiff, a value of 0.1 will be very bendy.
 
 * Tail Fin Stub Ratio
 
@@ -162,15 +162,11 @@ Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Pane
 
 * Max Side Fin Angle
 
->Like the tail fin, but for the pectoral fins 
+>Like the tail fin, but for the large side fins .
 
-* Side Fin Gain
+* Side Fin Phase
 
->Like the tail fin, but for the pectoral fins 
-
-* Side Fin Stiffness
-
->Like the tail fin, but for the pectoral fins 
+>Like the tail fin, but for the large side fins 
 
 * Chest Ratio
 

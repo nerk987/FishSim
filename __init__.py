@@ -18,22 +18,26 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-# version comment: V0.1.3 master branch - Tail tip movement change
+
+# version comment: V0.1.4 master branch - release candidate
+
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 1, 0),
+    "version": (0, 1, 4),
     "blender": (2, 78, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",
-    "wiki_url": "",
-    "tracker_url": "",
+    "wiki_url": "http://github.com/nerk987/FishSim",
+    "tracker_url": "http://github.com/nerk987/FishSim/issues",
     "category": "Animation"}
+    
 
 if "bpy" in locals():
     import imp
     imp.reload(FishSim)
+    imp.reload(metarig_menu)
     # print("Reloaded multifiles")
 else:
     from . import FishSim
@@ -45,6 +49,9 @@ from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, St
 from random import random
 from bpy.types import Operator, Panel, Menu
 from bl_operators.presets import AddPresetBase
+# import shutil
+
+# print(sys.modules[bpy.types.DATA_PT_rigify_buttons.__module__].__file__)    
 
 def add_preset_files():
     presets   = bpy.utils.user_resource('SCRIPTS', "presets")
@@ -92,6 +99,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
     def execute(self, context):
         #Get the object
         TargetRig = context.object
+        
         if TargetRig.type != "ARMATURE":
             print("Not an Armature", context.object.type)
             return {'CANCELLED'}
@@ -103,7 +111,6 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
             return {'CANCELLED'}
 
         TargetRoot["TargetProxy"] = TargetRig.name + '_proxy'
-            
         #Add the proxy object
         bpy.ops.mesh.primitive_cube_add()
         bound_box = bpy.context.active_object
@@ -172,10 +179,171 @@ class AddPresetFSim(AddPresetBase, Operator):
         "pFS.pChestRaise",
         "pFS.pMaxVerticalAngle",
         "pFS.pRandom",
+        # "pMaxPecFreq",
+        # "pMaxPecAngle",
+        # "pPecPhase",
+        # "pPecStubRatio",
+        # "pPecStiffness",
         ]
 
     # where to store the preset
     preset_subdir = "../addons/fishsim/presets"
+    
+
+class ARMATURE_OT_FSim_Run(bpy.types.Operator):
+    """Simulate and add keyframes for the armature to make it swim towards the target"""
+    bl_label = "Copy Models"
+    bl_idname = "armature.fsim_run"
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
+    
+    # add_preset_files()
+    
+    root = None
+
+    
+
+    def CopyChildren(self, scene, src_obj, new_obj):
+        for childObj in src_obj.children:
+            # print("Copying child: ", childObj.name)
+            new_child = childObj.copy()
+            new_child.data = childObj.data.copy()
+            new_child.animation_data_clear()
+            new_child.location = childObj.location - src_obj.location
+            new_child.parent = new_obj
+            new_child.matrix_parent_inverse = childObj.matrix_parent_inverse
+            scene.objects.link(new_child)
+            new_child.select = True
+            for mod in new_child.modifiers:
+                if mod.type == "ARMATURE":
+                    mod.object = new_obj
+
+    
+    def CopyRigs(self, context):
+        # print("Populate")
+        
+        scene = context.scene
+        src_obj = context.object
+        if src_obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+        src_obj.select = False
+        
+        #make a list of armatures
+        armatures = {}
+        for obj in scene.objects:
+            if obj.type == "ARMATURE" and obj.name[:3] == src_obj.name[:3]:
+                root = obj.pose.bones.get("root")
+                if root != None:
+                    if 'TargetProxy' in root:
+                        proxyName = root['TargetProxy']
+                        if len(proxyName) > 1:
+                            armatures[proxyName] = obj.name
+        
+        #for each target...
+        obj_count = 0
+        for obj in scene.objects:
+            if "FSim" in obj and (obj["FSim"][-3:] == src_obj.name[:3]):
+                #Limit the maximum copy number
+                if obj_count >= scene.FSimMainProps.fsim_maxnum:
+                    return  {'FINISHED'}
+                obj_count += 1
+                
+                #Go back to the first frame to make sure the rigs are placed correctly
+                scene.frame_set(scene.FSimMainProps.fsim_start_frame)
+                scene.update()
+                
+                #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
+                if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
+                    # print("time to duplicate")
+
+                    if scene.FSimMainProps.fsim_copyrigs:
+                        #If there is not already a matching armature, duplicate the template and update the link field
+                        new_obj = src_obj.copy()
+                        new_obj.data = src_obj.data.copy()
+                        # new_obj.animation_data_clear()
+                        scene.objects.link(new_obj)
+                        
+                        #Unlink from original action
+                        new_obj.animation_data.action = None
+                        
+                        #Update drivers with new rig id
+                        for dr in new_obj.animation_data.drivers:                            
+                            for v1 in dr.driver.variables:
+                                print("ID: ", v1.targets[0].id)
+                                v1.targets[0].id = new_obj
+                                
+                        new_obj.location = obj.matrix_world.to_translation()
+                        new_obj.rotation_euler = obj.rotation_euler
+                        new_obj.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
+                        new_root = new_obj.pose.bones.get('root')
+                        new_root['TargetProxy'] = obj.name
+                        new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
+                        scene.objects.active = new_obj
+                        new_obj.select = True
+                        src_obj.select = False
+                        
+                        #if 'CopyMesh' is selected duplicate the dependents and re-link
+                        if scene.FSimMainProps.fsim_copymesh:
+                            self.CopyChildren(scene, src_obj, new_obj)
+
+                #If there's already a matching rig, then just update it
+                elif obj["FSim"][-3:] == src_obj.name[:3]:
+                    # print("matching armature", armatures[obj.name])
+                    TargRig = scene.objects.get(armatures[obj.name])
+                    if TargRig is not None:
+                        #reposition if required
+                        if scene.FSimMainProps.fsim_copyrigs:
+                            # TargRig.animation_data_clear()
+                            TargRig.location = obj.matrix_world.to_translation()
+                            TargRig.rotation_euler = obj.rotation_euler
+                            TargRig.rotation_euler.z += math.radians(scene.FSimMainProps.fsim_startangle)
+                            TargRig.keyframe_insert(data_path='rotation_euler',  frame=(scene.FSimMainProps.fsim_start_frame))
+                            TargRig.keyframe_insert(data_path='location',  frame=(scene.FSimMainProps.fsim_start_frame))
+                        
+                        #if no children, and the 'copymesh' flag set, then copy the associated meshes
+                        if scene.FSimMainProps.fsim_copymesh and len(TargRig.children) < 1:
+                            self.CopyChildren(scene, src_obj, TargRig)
+                        
+                        #Leave the just generated objects selected
+                        scene.objects.active = TargRig
+                        TargRig.select = True
+                        src_obj.select = False
+                        for childObj in TargRig.children:
+                            childObj.select = True
+                        for childObj in src_obj.children:
+                            childObj.select = False
+
+                        # #Animate
+                        # if scene.FSimMainProps.fsim_multisim and TargRig.name != src_obj.name:
+                            # # self.BoneMovement(TargRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)
+                            # bpy.ops.armature.fsimulate()
+                
+            
+
+
+        
+    def execute(self, context):
+        #Get the object
+        TargetRig = context.object
+        scene = context.scene
+        scene.FSimMainProps.fsim_targetrig = TargetRig.name
+        scene = context.scene
+        if TargetRig.type != "ARMATURE":
+            print("Not an Armature", context.object.type)
+            return  {'FINISHED'}
+       
+        # print("Call test")
+        # bpy.ops.armature.fsim_test()
+        
+        if scene.FSimMainProps.fsim_copyrigs or scene.FSimMainProps.fsim_copymesh:
+            self.CopyRigs(context)
+        # else:
+            # # self.BoneMovement(TargetRig, scene.FSimMainProps.fsim_start_frame, scene.FSimMainProps.fsim_end_frame, context)   
+            # bpy.ops.armature.fsimulate()
+        
+        return {'FINISHED'}
+
+        
+    
 
 class ARMATURE_PT_FSim(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
@@ -280,6 +448,14 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         box.prop(pFS, "pChestRaise")
         box.prop(pFS, "pMaxVerticalAngle")
         box.prop(pFS, "pRandom")
+        # box = layout.box()
+        # box.label("Pectoral Fin")
+        # box.prop(pFS, "pMaxPecFreq")
+        # box.prop(pFS, "pMaxPecAngle")
+        # box.prop(pFS, "pPecPhase")
+        # box.prop(pFS, "pPecStubRatio")
+        # box.prop(pFS, "pPecStiffness")
+       
 
 
 def register():
@@ -288,10 +464,14 @@ def register():
     bpy.utils.register_class(ARMATURE_OT_FSim_Add)
     from . import FishSim
     FishSim.registerTypes()
+    # from . import metarig_menu
+    # metarig_menu.register()
     bpy.utils.register_class(ARMATURE_PT_FSim)
     bpy.utils.register_class(ARMATURE_PT_FSimPropPanel)
     bpy.utils.register_class(AMATURE_MT_fsim_presets)
     bpy.utils.register_class(AddPresetFSim)
+    bpy.utils.register_class(ARMATURE_OT_FSim_Run)
+    
 
 
 def unregister():
@@ -300,10 +480,13 @@ def unregister():
     bpy.utils.unregister_class(ARMATURE_OT_FSim_Add)
     from . import FishSim
     FishSim.unregisterTypes()
+    # from . import metarig_menu
+    # metarig_menu.unregister()
     bpy.utils.unregister_class(ARMATURE_PT_FSim)
     bpy.utils.unregister_class(ARMATURE_PT_FSimPropPanel)
     bpy.utils.unregister_class(AMATURE_MT_fsim_presets)
     bpy.utils.unregister_class(AddPresetFSim)
+    bpy.utils.unregister_class(ARMATURE_OT_FSim_Run)
 
 
 if __name__ == "__main__":
