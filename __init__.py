@@ -37,7 +37,7 @@ bl_info = {
 if "bpy" in locals():
     import imp
     imp.reload(FishSim)
-    imp.reload(metarig_menu)
+    # imp.reload(metarig_menu)
     # print("Reloaded multifiles")
 else:
     from . import FishSim
