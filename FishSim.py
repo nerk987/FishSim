@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.4 master branch - release candidate
+# version comment: V0.1.5 master branch - release candidate - with Velocity Hotfix
 
 import bpy
 import mathutils,  math, os
@@ -44,9 +44,9 @@ class FSimProps(bpy.types.PropertyGroup):
     #Property declaration
     pMass = FloatProperty(name="Mass", description="Total Mass", default=30.0, min=0, max=3000.0)
     pDrag = FloatProperty(name="Drag", description="Total Drag", default=8.0, min=0, max=3000.0)
-    pPower = FloatProperty(name="Power", description="Forward force for given tail fin speed and angle", default=20.0, min=0)
+    pPower = FloatProperty(name="Power", description="Forward force for given tail fin speed and angle", default=1.0, min=0)
     pMaxFreq = FloatProperty(name="Stroke Period", description="Maximum frequency of tail movement in frames per cycle", default=15.0)
-    pEffortGain = FloatProperty(name="Effort Gain", description="The amount of effort required for a change in distance to target", default=0.5, min=0.0)
+    pEffortGain = FloatProperty(name="Effort Gain", description="The amount of effort required for a change in distance to target", default=0.25, min=0.0)
     pEffortIntegral = FloatProperty(name="Effort Integral", description="The amount of effort required for a continuing distance to target", default=0.5, min=0.0)
     pEffortRamp = FloatProperty(name="Effort Ramp", description="First Order factor for ramping up effort", default=0.2, min=0.0, max=0.6)
     pAngularDrag = FloatProperty(name="AngularDrag", description="Resistance to changing direction", default=1.0, min=0)
@@ -428,7 +428,8 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #Do Object movment with Forward force and Angular force
         TailFinAngle = (self.sBack_fin1_scale - 1.0) * 30.0 / 0.4
         TailFinAngleForce = math.sin(math.radians(TailFinAngle))
-        ForwardForce = -back_fin_dif * TailFinAngleForce * pFS.pPower
+        # ForwardForce = -back_fin_dif * TailFinAngleForce * pFS.pPower
+        ForwardForce =  math.fabs(math.cos(math.radians(self.sState))) * math.radians(pFS.pTailAngle) * 15.0 * pFS.pPower / pFS.pMaxFreq
         
         #Angular force due to 'swish'
         AngularForce = back_fin_dif  / pFS.pAngularDrag
@@ -481,6 +482,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
 
     def execute(self, context):
         sFPM = context.scene.FSimMainProps
+        context.scene.FSimProps.sVelocity = 0.0
         # try:
             # self.sTargetRig = scene.objects.get(sFPM.fsim_targetrig)
         # except:
