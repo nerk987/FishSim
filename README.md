@@ -1,9 +1,9 @@
 # FishSim
 
 #### Fish Swimming Simulation   
-V0.1.4 Shark Simulation Release
+V0.1.5 Shark Simulation Release
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.4/FishSim.zip) 
+Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.5/FishSim.zip) 
 
 
 ## Introduction
