@@ -35,9 +35,9 @@ The above workflow can be used to animate as many fish models as you like. Howev
 * Select the 'Simulate' option again to simulate the swimming action for every matching armature and every target object location. Again tweak the swimming simulation parameters.
 * Select the 'Copy Meshes' option (and untick the other options) and use the 'Copy Models' button to make a copy of the fish mesh object(s) attached to the armatures at every target object location.
 
-##Video Turorial
+## Video Turorial
 
-[![FishSim Tutorial](images/FSim_ToolPanel.png)](https://youtu.be/voLwD-tJaSQ "FishSim Tutorial")
+[![FishSim Tutorial](images/FishSimYT.png)](https://youtu.be/voLwD-tJaSQ "FishSim Tutorial")
 
 ## Reference
 ### Installation
