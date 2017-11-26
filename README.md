@@ -1,9 +1,9 @@
 # FishSim - Goldfish Version
 
 #### Fish Swimming Simulation   
-V0.2.0 GoldFish Release
+V0.2.0 GoldFish Release - (Work in Progress)
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.0/FishSim.zip) 
+
 
 ## New in This Release
 * New Goldfish Rigify metarig available when both FishSim and Rigify are enabled
