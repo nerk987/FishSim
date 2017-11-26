@@ -1,11 +1,14 @@
-# FishSim
+# FishSim - Goldfish Version
 
 #### Fish Swimming Simulation   
-V0.1.5 Shark Simulation Release
+V0.2.0 GoldFish Release
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.5/FishSim.zip) 
-Rigged Bull Shark Blender File Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.5/BullShark.blend) 
-Rigged Archer Fish Blender File Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.5/ArcherFish.blend) 
+Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.0/FishSim.zip) 
+
+## New in This Release
+* New Goldfish Rigify metarig available when both FishSim and Rigify are enabled
+* The simulation will now optionally allow the fish to 'hover' using pectoral fin oscillation and air bladder
+* The new Pectoral Fin and Hover parameters are enabled when a rig created from the 'GoldFish' metarig is selected.
 
 
 ## Introduction
@@ -17,7 +20,7 @@ In the real world, fish often come in large numbers. There is already an impress
 
 ## Workflow summary
 * Create or download a fish model
-* Use the Rigify Shark metarig to rig the model (or download one of the example models)
+* Use the Rigify Shark, or FishSim/Rigify Goldfish metarig to rig the model (or download one of the example models)
 * Install and enable the FishSim addon. The FishSim panel will be available while the fish armature is selected
 * From the FishSim tools panel, add a target for the model
 * Animate the target via keyframes, path follow etc to show the fish model where to swim
@@ -32,10 +35,6 @@ The above workflow can be used to animate as many fish models as you like. Howev
 * Select the 'Distribute multiple copies of the rig' option and then click on the 'Copy Models' button to make a copy of the fish armature at every target object location. Optionally limit the number of rigs to a small number using the 'Maximum number of copies' parameter to speed up the initial testing.
 * Select the 'Simulate' option again to simulate the swimming action for every matching armature and every target object location. Again tweak the swimming simulation parameters.
 * Select the 'Copy Meshes' option (and untick the other options) and use the 'Copy Models' button to make a copy of the fish mesh object(s) attached to the armatures at every target object location.
-
-##Video Turorial
-
-[![FishSim Tutorial](images/FSim_ToolPanel.png)](https://youtu.be/voLwD-tJaSQ "FishSim Tutorial")
 
 ## Reference
 ### Installation

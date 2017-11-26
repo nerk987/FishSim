@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.1 develop branch - metarig add
+# version comment: V0.1.1 develop branch - Pectoral work
 
 bl_info = {
     "name": "FishSim",
@@ -29,8 +29,8 @@ bl_info = {
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",
-    "wiki_url": "",
-    "tracker_url": "",
+    "wiki_url": "http://github.com/nerk987/FishSim",
+    "tracker_url": "http://github.com/nerk987/FishSim/issues",
     "category": "Animation"}
     
 
@@ -184,6 +184,21 @@ class AddPresetFSim(AddPresetBase, Operator):
         "pPecPhase",
         "pPecStubRatio",
         "pPecStiffness",
+        "pPecEffortGain",
+        "pPecTurnAssist",
+        "pHTransTime",
+        "pSTransTime",
+        "pPecOffset",
+        "pHoverDist",
+        "pHoverTailFrc",
+        "pHoverMaxForce",
+        "pHoverDerate",
+        "pHoverTilt",
+        "pPecDuration",
+        "pPecDuty",
+        "pHoverTwitch",
+        "pHoverTwitchTime",
+        "pPecSynch"
         ]
 
     # where to store the preset
@@ -450,13 +465,26 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         box.prop(pFS, "pRandom")
         box = layout.box()
         box.label("Pectoral Fin")
+        box.prop(pFS, "pPecEffortGain")
+        box.prop(pFS, "pPecTurnAssist")
         box.prop(pFS, "pMaxPecFreq")
         box.prop(pFS, "pMaxPecAngle")
         box.prop(pFS, "pPecPhase")
         box.prop(pFS, "pPecStubRatio")
         box.prop(pFS, "pPecStiffness")
-       
-
+        box.prop(pFS, "pHTransTime")
+        box.prop(pFS, "pSTransTime")
+        box.prop(pFS, "pPecOffset")
+        box.prop(pFS, "pHoverDist")
+        box.prop(pFS, "pHoverTailFrc")
+        box.prop(pFS, "pHoverMaxForce")
+        box.prop(pFS, "pHoverDerate")
+        box.prop(pFS, "pHoverTilt")
+        box.prop(pFS, "pPecDuration")
+        box.prop(pFS, "pPecDuty")
+        box.prop(pFS, "pHoverTwitch")
+        box.prop(pFS, "pHoverTwitchTime")
+        box.prop(pFS, "pPecSynch")
 
 def register():
     bpy.utils.register_class(FSimMainProps)
