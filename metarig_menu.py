@@ -15,6 +15,10 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
+# This module is essentially a copy of the module of the same name in the Rigify Add-on
+# The authors are listed as Nathan Vegdahl, Lucio Rossi, Ivan Cappiello
+# It's included in the FishSim addon as a way to distribute additional Rigify Metarigs created
+# by the Rigify add-on and is disabled unless Rigify is enabled.
 
 # version comment: V0.1.1 develop branch - metarig add
 
