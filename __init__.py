@@ -405,7 +405,7 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
 
 class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
     """Creates a Panel in the Tool Panel"""
-    bl_label = "Simulation Properties"
+    bl_label = "Main Simulation Properties"
     bl_idname = "armature.fsimproppanel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -458,28 +458,65 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         box.prop(pFS, "pTailFinStubRatio")
         box.prop(pFS, "pMaxSideFinAngle")
         box.prop(pFS, "pSideFinPhase")
-        # box.prop(pFS, "pSideFinStiffness")
         box.prop(pFS, "pChestRatio")
         box.prop(pFS, "pChestRaise")
         box.prop(pFS, "pMaxVerticalAngle")
         box.prop(pFS, "pRandom")
+
+class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
+    """Creates a Panel in the Tool Panel"""
+    bl_label = "Pectoral Fin Properties"
+    bl_idname = "armature.fsimpecpanel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_category = "FishSim"
+    #bl_context = "objectmode"
+    
+    @classmethod
+    def poll(cls, context):
+        if context.object != None:
+            if (context.mode in {'OBJECT', 'POSE'}) and (context.object.type == "ARMATURE"):
+                PecFinTopL = context.object.pose.bones.get("t_master.L")
+                if PecFinTopL != None:
+                    return True
+        return False
+
+    def draw(self, context):
+        #Make sure the presets directory exists
+        # add_preset_files()
+        
+        layout = self.layout
+
+        scene = context.scene
+        # row = layout.row()
+        # row.menu("AMATURE_MT_fsim_presets", text=bpy.types.AMATURE_MT_fsim_presets.bl_label)
+        # row.operator(AddPresetFSim.bl_idname, text="", icon='ZOOMIN')
+        # row.operator(AddPresetFSim.bl_idname, text="", icon='ZOOMOUT').remove_active = True        
+        
+        pFS = context.scene.FSimProps
         box = layout.box()
-        box.label("Pectoral Fin")
+        box.label("Main Pec Parameters")
         box.prop(pFS, "pPecEffortGain")
         box.prop(pFS, "pPecTurnAssist")
         box.prop(pFS, "pMaxPecFreq")
         box.prop(pFS, "pMaxPecAngle")
+        box = layout.box()
+        box.label("Pec Fin Tuning")
         box.prop(pFS, "pPecPhase")
         box.prop(pFS, "pPecStubRatio")
         box.prop(pFS, "pPecStiffness")
+        box.prop(pFS, "pPecOffset")
+        box = layout.box()
+        box.label("Hover Mode Params")
+        box.prop(pFS, "pHoverDist")
         box.prop(pFS, "pHTransTime")
         box.prop(pFS, "pSTransTime")
-        box.prop(pFS, "pPecOffset")
-        box.prop(pFS, "pHoverDist")
         box.prop(pFS, "pHoverTailFrc")
         box.prop(pFS, "pHoverMaxForce")
         box.prop(pFS, "pHoverDerate")
         box.prop(pFS, "pHoverTilt")
+        box = layout.box()
+        box.label("Variation Tuning")
         box.prop(pFS, "pPecDuration")
         box.prop(pFS, "pPecDuty")
         box.prop(pFS, "pHoverTwitch")
@@ -496,6 +533,7 @@ def register():
     metarig_menu.register()
     bpy.utils.register_class(ARMATURE_PT_FSim)
     bpy.utils.register_class(ARMATURE_PT_FSimPropPanel)
+    bpy.utils.register_class(ARMATURE_PT_FSimPecPanel)
     bpy.utils.register_class(AMATURE_MT_fsim_presets)
     bpy.utils.register_class(AddPresetFSim)
     bpy.utils.register_class(ARMATURE_OT_FSim_Run)
@@ -512,6 +550,7 @@ def unregister():
     metarig_menu.unregister()
     bpy.utils.unregister_class(ARMATURE_PT_FSim)
     bpy.utils.unregister_class(ARMATURE_PT_FSimPropPanel)
+    bpy.utils.unregister_class(ARMATURE_PT_FSimPecPanel)
     bpy.utils.unregister_class(AMATURE_MT_fsim_presets)
     bpy.utils.unregister_class(AddPresetFSim)
     bpy.utils.unregister_class(ARMATURE_OT_FSim_Run)

@@ -70,12 +70,12 @@ class FSimProps(bpy.types.PropertyGroup):
     pPecEffortGain = FloatProperty(name="Pectoral Effort Gain", description="Amount of effort to maintain position with 1.0 trying very hard to maintain", default=0.25, min=0, max=1.0)
     pPecTurnAssist = FloatProperty(name="Pectoral Turn Assist", description="Turning Speed while hovering 5 is fast, .2 is slow", default=1.0, min=0, max=20.0)
 
-    pMaxPecFreq = FloatProperty(name="Pectoral Stroke Period", description="Maximum frequency of pectoral fin movement in frames per cycle", default=40.0, min=0)
+    pMaxPecFreq = FloatProperty(name="Pectoral Stroke Period", description="Maximum frequency of pectoral fin movement in frames per cycle", default=15.0, min=0)
     pMaxPecAngle = FloatProperty(name="Max Pec Fin Angle", description="Max Pectoral Fin Angle", default=20.0, min=0, max=80)
     pPecPhase = FloatProperty(name="Pec Fin Tip Phase", description="How far the fin tip lags behind the main movement in degrees", default=90.0, min=0, max=180)
     pPecStubRatio = FloatProperty(name="Pectoral Stub Ratio", description="Ratio for the bottom part of the pectoral fin", default=0.7, min=0, max=2)
     pPecStiffness = FloatProperty(name="Pec Fin Stiffness", description="Pectoral fin stiffness, with 1.0 being very stiff", default=0.7, min=0, max=2)
-    pHTransTime = FloatProperty(name="Hover Transition Time", description="Speed of transition between swim and hover in seconds", default=1.5, min=0, max=2)
+    pHTransTime = FloatProperty(name="Hover Transition Time", description="Speed of transition between swim and hover in seconds", default=0.5, min=0, max=2)
     pSTransTime = FloatProperty(name="Swim Transition Time", description="Speed of transition between hover and swim in seconds", default=0.2, min=0, max=2)
     pPecOffset = FloatProperty(name="Pectoral Offset", description="Adjustment to allow for different rest pose angles of the fins", default=0.0, min=-90.0, max=90.0)
     pHoverDist = FloatProperty(name="Hover Distance", description="Distance from Target to begin Hover", default=1.0, min=0.0, max=10.0)
@@ -129,17 +129,12 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
     sRestFrame = 0.0
     sRestartFrame = 0.0
     sRestAmount = 0.0
+    sGoldfish = True
+    sStartAngle = 0.0
     
     def SetInitialKeyframe(self, TargetRig, nFrame):
         TargetRig.keyframe_insert(data_path='location',  frame=(nFrame))
         TargetRig.keyframe_insert(data_path='rotation_euler',  frame=(nFrame))
-        self.sPecFinPalmL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-        self.sPecFinPalmR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-        # print("Palm Init Insert: ", nFrame)
-        self.sPecFinTopL.keyframe_insert(data_path='scale',  frame=(nFrame))
-        self.sPecFinBottomL.keyframe_insert(data_path='scale',  frame=(nFrame))
-        self.sPecFinTopR.keyframe_insert(data_path='scale',  frame=(nFrame))
-        self.sPecFinBottomR.keyframe_insert(data_path='scale',  frame=(nFrame))
         self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         self.sChest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         self.sTorso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
@@ -149,6 +144,13 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sSideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         self.sSideFinR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         self.sRoot.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+        if self.sGoldfish:
+            self.sPecFinPalmL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+            self.sPecFinPalmR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
+            self.sPecFinTopL.keyframe_insert(data_path='scale',  frame=(nFrame))
+            self.sPecFinBottomL.keyframe_insert(data_path='scale',  frame=(nFrame))
+            self.sPecFinTopR.keyframe_insert(data_path='scale',  frame=(nFrame))
+            self.sPecFinBottomR.keyframe_insert(data_path='scale',  frame=(nFrame))
    
     
     def armature_list(self, scene, sFPM):
@@ -209,7 +211,9 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         DirectionEffortV = max(-1.0,DirectionEffortV)
         
         #Hover Mode Detection (Close to target and slow)
-        if TargetDirn.length < (TargetProxy.dimensions[1] * pFS.pHoverDist):# and pFS.sVelocity.length < pFS.pHoverVel:
+        if not self.sGoldfish:
+            self.sHoverMode = 0.0
+        elif TargetDirn.length < (TargetProxy.dimensions[1] * pFS.pHoverDist):# and pFS.sVelocity.length < pFS.pHoverVel:
             self.sHoverMode = min(1.0, self.sHoverMode + pFS.pSTransTime / 25.0)
         else:
             self.sHoverMode = max(0.0, self.sHoverMode - pFS.pHTransTime / 25.0)
@@ -249,12 +253,13 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         RigForce = self.sHoverMode * pFS.pPecEffortGain * (TargetProxy.matrix_world.to_translation() - TargetRig.location) * TargetRig.matrix_world
         
         #Limit the force available
-        RigForce[1] = max(RigForce[1], -pFS.pHoverMaxForce)
-        RigForce[1] = min(RigForce[1], pFS.pHoverMaxForce * pFS.pHoverDerate)
-        RigForce[2] = max(RigForce[2], -pFS.pHoverMaxForce * pFS.pHoverDerate)
-        RigForce[2] = min(RigForce[2], pFS.pHoverMaxForce * pFS.pHoverDerate)
-        RigForce[0] = max(RigForce[0], -pFS.pHoverMaxForce * pFS.pHoverDerate)
-        RigForce[0] = min(RigForce[0], pFS.pHoverMaxForce * pFS.pHoverDerate)
+        xHoverMaxForce = pFS.pHoverMaxForce * (1-self.sRestAmount*0.6)
+        RigForce[1] = max(RigForce[1], -xHoverMaxForce)
+        RigForce[1] = min(RigForce[1], xHoverMaxForce * pFS.pHoverDerate)
+        RigForce[2] = max(RigForce[2], -xHoverMaxForce * pFS.pHoverDerate)
+        RigForce[2] = min(RigForce[2], xHoverMaxForce * pFS.pHoverDerate)
+        RigForce[0] = max(RigForce[0], -xHoverMaxForce * pFS.pHoverDerate)
+        RigForce[0] = min(RigForce[0], xHoverMaxForce * pFS.pHoverDerate)
 
         #Calculate velocity
         pFS.sVelocity[0] += (RigForce[0] - pFS.pDrag * pFS.sVelocity[0] * math.fabs(pFS.sVelocity[0])) / pFS.pMass
@@ -265,9 +270,12 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         # print("sVelocity", pFS.sVelocity)
         
         #Rotate model direction to match target
-        TargetRig.rotation_mode = 'QUATERNION'
-        TargetRig.rotation_quaternion = TargetRig.rotation_quaternion.slerp(TargetProxy.matrix_world.to_quaternion(),pFS.pPecTurnAssist/100.0)
-        TargetRig.rotation_mode = 'XYZ'
+        # TargetRig.rotation_mode = 'QUATERNION'
+        xTargetQuat = TargetProxy.matrix_world.to_quaternion() * mathutils.Quaternion((0,0,1),math.radians(self.sStartAngle))
+        xRigQuat = TargetRig.rotation_euler.to_quaternion()
+        xRigQuat = xRigQuat.slerp(xTargetQuat,pFS.pPecTurnAssist/100.0)
+        TargetRig.rotation_euler = xRigQuat.to_euler('XYZ', TargetRig.rotation_euler)
+        # TargetRig.rotation_mode = 'XYZ'
         TargetRig.keyframe_insert(data_path='rotation_euler',  frame=(nFrame))
         
         #Forward/Backward Tilt based on force
@@ -294,6 +302,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         pFSM = scene.FSimMainProps
         startFrame = pFSM.fsim_start_frame
         endFrame = pFSM.fsim_end_frame
+        self.sStartAngle = pFSM.fsim_startangle
         
         #Get the current Target Rig
         # try:
@@ -324,6 +333,10 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sPecFinBottomR = TargetRig.pose.bones.get("b_master.R")
         self.sPecFinPalmL = TargetRig.pose.bones.get("pec_palm.L")
         self.sPecFinPalmR = TargetRig.pose.bones.get("pec_palm.R")
+        if (self.sPecFinTopL is None) or (self.sPecFinTopR is None) or (self.sPecFinBottomL is None) or (self.sPecFinBottomR is None) or (self.sPecFinPalmL is None) or (self.sPecFinPalmR is None):
+            print("Not a Goldfish Armature")
+            self.sGoldfish = False
+            self.sHoverMode = 0.0
             
         #initialise state variabiles
         self.sState = 0.0
@@ -380,12 +393,16 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         if (nFrame >= self.sRestFrame and nFrame < self.sRestartFrame and self.sRestAmount < 1.0):
             self.sRestAmount = min(1.0, self.sRestAmount + 0.2)
             
-        print("RestAmaount: ", self.sRestAmount, self.sRestFrame, self.sRestartFrame)
+        # print("RestAmount: ", self.sRestAmount, self.sRestFrame, self.sRestartFrame)
+        
+        #
 
         #Slerp between oscillating angle and rest angle depending on hover status and reset periods
-        xRestAmount = self.sRestAmount * (1.0 - self.sHoverMode)
-        print("xRestAmaount: ", xRestAmount)
-        print("RestAmount: ", self.sRestAmount, self.sRestFrame, self.sRestartFrame)
+        # xRestAmount = 1 means no flapping due to either resting or not hovering
+        xRestAmount = (1.0 - (1.0 - self.sRestAmount) * self.sHoverMode)
+        # print("xRestAmaount: ", xRestAmount)
+        # print("RestAmount: ", self.sRestAmount, self.sRestFrame, self.sRestartFrame)
+        # print("HoverMode: ", self.sHoverMode)
         yAng = mathutils.Quaternion((0.0, 1.0, 0.0), yPecAngle)
         # yAng = mathutils.Quaternion((0.0, 1.0, 0.0), 0)
         xAng = yAng * mathutils.Quaternion((1.0, 0.0, 0.0), -xPecAngle)
@@ -396,7 +413,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #Tip deflection based on phase offset
         xMaxPecScale = pFS.pMaxPecAngle * ( 1.0 / pFS.pPecStiffness) * 0.2 / 30.0
         
-        self.sPec_scale = 1.0 + math.sin(math.radians(self.sPecState - pFS.pPecPhase)) * xMaxPecScale * xRestAmount
+        self.sPec_scale = 1.0 + math.sin(math.radians(self.sPecState - pFS.pPecPhase)) * xMaxPecScale * (1.0 - xRestAmount)
         
         self.sPecFinTopL.scale[1] = self.sPec_scale
         self.sPecFinBottomL.scale[1] = 1 - (1 - self.sPec_scale) * pFS.pPecStubRatio
@@ -460,19 +477,20 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         xHoverTailAngleOffset = pFS.pMaxSteeringAngle * self.sHoverTurn / 180.0
         pFS.sTailAngleOffset = pFS.sTailAngleOffset * (1 - pFS.pEffortRamp) + pFS.pEffortRamp * (1.0 - self.sHoverMode) * xSwimTailAngleOffset + pFS.pEffortRamp * self.sHoverMode * xHoverTailAngleOffset
         # pFS.sTailAngleOffset = pFS.sTailAngleOffset * (1 - pFS.pEffortRamp) + pFS.pEffortRamp * xSwimTailAngleOffset
-        #print("TailOffset: ", pFS.sTailAngleOffset)
+        print("xHoverOffset, TailOffset: ", xHoverTailAngleOffset, pFS.sTailAngleOffset)
+        print("HoverMode, xSwimTailAngleOffset: ", self.sHoverMode, xSwimTailAngleOffset)
         
         
         #Spine Movement
         self.sState = self.sState + 360.0 / pFS.pFreq
         xTailAngle = math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle) + math.radians(pFS.sTailAngleOffset)
-        #print("TailAngle", xTailAngle)
+        print("TailAngle", math.degrees(xTailAngle))
         self.sSpine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
         self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
-        ChestRot = mathutils.Quaternion((0.0, 0.0, 1.0), -xTailAngle * pFS.pChestRatio - math.radians(pFS.sTailAngleOffset))
-        self.sChest.rotation_quaternion = ChestRot * mathutils.Quaternion((1.0, 0.0, 0.0), -math.fabs(math.radians(pFS.sTailAngleOffset))*pFS.pChestRaise)
+        ChestRot = mathutils.Quaternion((0.0, 0.0, 1.0), -xTailAngle * pFS.pChestRatio)# - math.radians(pFS.sTailAngleOffset))
+        self.sChest.rotation_quaternion = ChestRot * mathutils.Quaternion((1.0, 0.0, 0.0), -math.fabs(math.radians(pFS.sTailAngleOffset))*pFS.pChestRaise * (1.0 - self.sHoverMode))
         #print("Torso:", pFS.sTailAngleOffset)
-        self.sTorso.rotation_quaternion = mathutils.Quaternion((0.0, 1.0, 0.0), -math.radians(pFS.sTailAngleOffset)*pFS.pLeanIntoTurn)
+        self.sTorso.rotation_quaternion = mathutils.Quaternion((0.0, 1.0, 0.0), -math.radians(pFS.sTailAngleOffset)*pFS.pLeanIntoTurn * (1.0 - self.sHoverMode))
         self.sChest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         self.sTorso.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         #context.scene.update()
