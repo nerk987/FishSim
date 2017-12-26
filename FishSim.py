@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.1 develop branch - start on pec animation (includes tail angle fix)
+# version comment: V0.2.0 develop branch - Goldfish Version
 
 import bpy
 import mathutils,  math, os
@@ -77,13 +77,13 @@ class FSimProps(bpy.types.PropertyGroup):
     pPecStiffness = FloatProperty(name="Pec Fin Stiffness", description="Pectoral fin stiffness, with 1.0 being very stiff", default=0.7, min=0, max=2)
     pHTransTime = FloatProperty(name="Hover Transition Time", description="Speed of transition between swim and hover in seconds", default=0.5, min=0, max=2)
     pSTransTime = FloatProperty(name="Swim Transition Time", description="Speed of transition between hover and swim in seconds", default=0.2, min=0, max=2)
-    pPecOffset = FloatProperty(name="Pectoral Offset", description="Adjustment to allow for different rest pose angles of the fins", default=0.0, min=-90.0, max=90.0)
-    pHoverDist = FloatProperty(name="Hover Distance", description="Distance from Target to begin Hover", default=1.0, min=0.0, max=10.0)
+    pPecOffset = FloatProperty(name="Pectoral Offset", description="Adjustment to allow for different rest pose angles of the fins", default=20.0, min=-90.0, max=90.0)
+    pHoverDist = FloatProperty(name="Hover Distance", description="Distance from Target to begin Hover in lengths of the target box. A value of 0 will disable hovering, and the action will be similar to the shark rig.", default=1.0, min=-1.0, max=10.0)
     pHoverTailFrc = FloatProperty(name="Hover Tail Fraction", description="During Hover, the amount of swimming tail movement to retain. 1.0 is full movment, 0 is none", default=0.2, min=0.0, max=5.0)
     pHoverMaxForce = FloatProperty(name="Hover Max Force", description="The maximum force the fins can apply in Hover Mode. 1.0 is quite fast", default=0.2, min=0.0, max=10.0)
     pHoverDerate = FloatProperty(name="Hover Derate", description="In hover, the fish can't go backwards or sideways as fast. This parameter determines how much slower. 1.0 is the same.", default=0.2, min=-0.0, max=1.0)
     pHoverTilt = FloatProperty(name="Hover Tilt", description="The amount of forward/backward tilt in hover as the fish powers forward and backward. in Degrees and based on Max Hover Force", default=4.0, min=-0.0, max=40.0)
-    pPecDuration = FloatProperty(name="Pec Duration", description="The amount of hovering the fish can do before a reset. Duration in frames", default=50.0, min=-5.0)
+    pPecDuration = FloatProperty(name="Pec Duration", description="The amount of hovering the fish can do before a rest. Duration in frames", default=50.0, min=-5.0)
     pPecDuty = FloatProperty(name="Pec Duty Cycle", description="The amount of rest time compared to active time. 1.0 is 50/50, 0.0 is no rest", default=0.8, min=0.0)
     pHoverTwitch = FloatProperty(name="Hover Twitch", description="The size of twitching while in hover mode in degrees", default=4.0, min=0.0, max=60.0)
     pHoverTwitchTime = FloatProperty(name="Hover Twitch Time", description="The time between twitching while in hover mode in frames", default=40.0, min=0.0)
@@ -131,6 +131,9 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
     sRestAmount = 0.0
     sGoldfish = True
     sStartAngle = 0.0
+    sTwitchFrame = 0.0
+    sTwitchAngle = 0.0
+    sTwitchTarget = 0.0
     
     def SetInitialKeyframe(self, TargetRig, nFrame):
         TargetRig.keyframe_insert(data_path='location',  frame=(nFrame))
@@ -471,19 +474,42 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #Convert effort into tail frequency and amplitude (Fades to a low value if in hover mode)
         pFS.pFreq = self.rMaxFreq * ((1-self.sHoverMode) * (1.0/(pFS.sEffort+ 0.01)) + self.sHoverMode * 2.0)
         pFS.pTailAngle = self.rMaxTailAngle * ((1-self.sHoverMode) * pFS.sEffort + self.sHoverMode * pFS.pHoverTailFrc)
+        print("rMax, Frc: %.2f, %.2f" % (self.rMaxTailAngle, pFS.pHoverTailFrc))
         
-        #Convert direction into Tail angle (Work out swim turn angle and Hover turn angle and mix)
+        #Convert direction into Tail Offset angle (Work out swim turn angle and Hover turn angle and mix)
         xSwimTailAngleOffset = RqdDirection * pFS.pMaxSteeringAngle
-        xHoverTailAngleOffset = pFS.pMaxSteeringAngle * self.sHoverTurn / 180.0
-        pFS.sTailAngleOffset = pFS.sTailAngleOffset * (1 - pFS.pEffortRamp) + pFS.pEffortRamp * (1.0 - self.sHoverMode) * xSwimTailAngleOffset + pFS.pEffortRamp * self.sHoverMode * xHoverTailAngleOffset
+        xHoverTailAngleOffset = pFS.pMaxSteeringAngle * self.sHoverTurn / 30.0
+        xHoverTailAngleOffset = 0.0
+        # xHoverFactor = max(0,(1.0 - self.sHoverMode * 4.0))
+        pFS.sTailAngleOffset = pFS.sTailAngleOffset * (1 - pFS.pEffortRamp) + pFS.pEffortRamp * max(0,(1.0 - self.sHoverMode*2.0)) * xSwimTailAngleOffset + pFS.pEffortRamp * self.sHoverMode * xHoverTailAngleOffset
         # pFS.sTailAngleOffset = pFS.sTailAngleOffset * (1 - pFS.pEffortRamp) + pFS.pEffortRamp * xSwimTailAngleOffset
-        print("xHoverOffset, TailOffset: ", xHoverTailAngleOffset, pFS.sTailAngleOffset)
-        print("HoverMode, xSwimTailAngleOffset: ", self.sHoverMode, xSwimTailAngleOffset)
+        # print("xHoverOffset, TailOffset: ", xHoverTailAngleOffset, pFS.sTailAngleOffset)
+        # print("HoverMode, xSwimTailAngleOffset: ", self.sHoverMode, xSwimTailAngleOffset)
+        
+        #Hover 'Twitch' calculations (Make the fish do some random twisting during hover mode)
+        if self.sHoverMode < 0.5:
+            #Not hovering so reset
+            self.sTwitchTarget = 0.0
+            self.sTwitchFrame = 0.0
+        else:
+            #Hovering, so check if the twitch frame has been reached
+            if nFrame >= self.sTwitchFrame:
+                #set new twitch frame
+                self.sTwitchFrame = nFrame + pFS.pHoverTwitchTime * (random() - 0.5)
+                #Only twitch while not resting
+                if self.sTwitchFrame < self.sRestartFrame and self.sTwitchFrame > self.sRestFrame:
+                    self.sTwitchFrame = self.sRestartFrame + 5
+                #set a new twitch target angle
+                self.sTwitchTarget = pFS.pHoverTwitch * 2.0 * (random() - 0.5)
+        self.sTwitchAngle = self.sTwitchAngle * 0.9 + 0.1 * self.sTwitchTarget
+        print("Twitch Angle: ", self.sTwitchAngle)
+            
         
         
         #Spine Movement
         self.sState = self.sState + 360.0 / pFS.pFreq
-        xTailAngle = math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle) + math.radians(pFS.sTailAngleOffset)
+        xTailAngle = math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle) + math.radians(pFS.sTailAngleOffset) + math.radians(self.sTwitchAngle)
+        print("Components: %.2f, %.2f, %.2f" % (math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle),math.radians(pFS.sTailAngleOffset),math.radians(self.sTwitchAngle)))
         print("TailAngle", math.degrees(xTailAngle))
         self.sSpine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
         self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
@@ -502,10 +528,11 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
             back_fin_dif = (self.sBack_fin_middle.matrix.decompose()[0].x - self.sOld_back_fin.x)
         self.sOld_back_fin = self.sBack_fin_middle.matrix.decompose()[0]
         
-        #Tailfin based on phase offset
+        #Tailfin bending based on phase offset
         pMaxTailScale = pFS.pMaxTailFinAngle * ( 1.0 / pFS.pTailFinStiffness) * 0.2 / 30.0
         
-        self.sBack_fin1_scale = 1.0 + math.sin(math.radians(self.sState + pFS.pTailFinPhase)) * pMaxTailScale
+        self.sBack_fin1_scale = 1.0 + math.sin(math.radians(self.sState + pFS.pTailFinPhase)) * pMaxTailScale * (pFS.pTailAngle / self.rMaxTailAngle)
+        # print("Bend Factor: ", (pFS.pTailAngle / self.rMaxTailAngle))
         
         self.sBack_fin1.scale[1] = self.sBack_fin1_scale
         self.sBack_fin2.scale[1] = 1 - (1 - self.sBack_fin1_scale) * pFS.pTailFinStubRatio

@@ -19,12 +19,12 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.1.1 develop branch - Pectoral work
+# version comment: V0.2.0 develop branch - Goldfish Version
 
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "blender": (2, 78, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
@@ -179,26 +179,26 @@ class AddPresetFSim(AddPresetBase, Operator):
         "pFS.pChestRaise",
         "pFS.pMaxVerticalAngle",
         "pFS.pRandom",
-        "pMaxPecFreq",
-        "pMaxPecAngle",
-        "pPecPhase",
-        "pPecStubRatio",
-        "pPecStiffness",
-        "pPecEffortGain",
-        "pPecTurnAssist",
-        "pHTransTime",
-        "pSTransTime",
-        "pPecOffset",
-        "pHoverDist",
-        "pHoverTailFrc",
-        "pHoverMaxForce",
-        "pHoverDerate",
-        "pHoverTilt",
-        "pPecDuration",
-        "pPecDuty",
-        "pHoverTwitch",
-        "pHoverTwitchTime",
-        "pPecSynch"
+        "pFS.pMaxPecFreq",
+        "pFS.pMaxPecAngle",
+        "pFS.pPecPhase",
+        "pFS.pPecStubRatio",
+        "pFS.pPecStiffness",
+        "pFS.pPecEffortGain",
+        "pFS.pPecTurnAssist",
+        "pFS.pHTransTime",
+        "pFS.pSTransTime",
+        "pFS.pPecOffset",
+        "pFS.pHoverDist",
+        "pFS.pHoverTailFrc",
+        "pFS.pHoverMaxForce",
+        "pFS.pHoverDerate",
+        "pFS.pHoverTilt",
+        "pFS.pPecDuration",
+        "pFS.pPecDuty",
+        "pFS.pHoverTwitch",
+        "pFS.pHoverTwitchTime",
+        "pFS.pPecSynch"
         ]
 
     # where to store the preset

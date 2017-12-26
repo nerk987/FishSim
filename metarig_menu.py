@@ -19,8 +19,9 @@
 # The authors are listed as Nathan Vegdahl, Lucio Rossi, Ivan Cappiello
 # It's included in the FishSim addon as a way to distribute additional Rigify Metarigs created
 # by the Rigify add-on and is disabled unless Rigify is enabled.
+#########
 
-# version comment: V0.1.1 develop branch - metarig add
+# version comment: V0.2.0 develop branch - Goldfish Version
 
 import os
 from string import capwords
@@ -29,7 +30,6 @@ import bpy
 import imp
 import importlib
 
-# from . import utils
 METARIG_DIR = "metarigs"  # Name of the directory where metarigs are kept
 MODULE_NAME = "FishSim"  # Windows/Mac blender is weird, so __package__ doesn't work
 
