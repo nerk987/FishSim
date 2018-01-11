@@ -1,13 +1,14 @@
-# FishSim
+# FishSim - Goldfish Version
 
 #### Fish Swimming Simulation   
-V0.1.5 Shark Simulation Release
+V0.2.0 GoldFish Release - (Work in Progress)
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.5/FishSim.zip) 
 
-Rigged Bull Shark Blender File Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.5/BullShark.blend) 
 
-Rigged Archer Fish Blender File Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.1.5/ArcherFish.blend) 
+## New in This Release
+* New Goldfish Rigify metarig available when both FishSim and Rigify are enabled
+* The simulation will now optionally allow the fish to 'hover' using pectoral fin oscillation and air bladder.
+* The new Pectoral Fin and Hover parameters are enabled when a rig created from the 'GoldFish' metarig is selected.
 
 
 ## Introduction
@@ -19,7 +20,7 @@ In the real world, fish often come in large numbers. There is already an impress
 
 ## Workflow summary
 * Create or download a fish model
-* Use the Rigify Shark metarig to rig the model (or download one of the example models)
+* Use the Rigify Shark, or FishSim/Rigify Goldfish metarig to rig the model (or download one of the example models)
 * Install and enable the FishSim addon. The FishSim panel will be available while the fish armature is selected
 * From the FishSim tools panel, add a target for the model
 * Animate the target via keyframes, path follow etc to show the fish model where to swim
@@ -34,10 +35,6 @@ The above workflow can be used to animate as many fish models as you like. Howev
 * Select the 'Distribute multiple copies of the rig' option and then click on the 'Copy Models' button to make a copy of the fish armature at every target object location. Optionally limit the number of rigs to a small number using the 'Maximum number of copies' parameter to speed up the initial testing.
 * Select the 'Simulate' option again to simulate the swimming action for every matching armature and every target object location. Again tweak the swimming simulation parameters.
 * Select the 'Copy Meshes' option (and untick the other options) and use the 'Copy Models' button to make a copy of the fish mesh object(s) attached to the armatures at every target object location.
-
-## Video Turorial
-
-[![FishSim Tutorial](images/FishSimYT.png)](https://youtu.be/voLwD-tJaSQ "FishSim Tutorial")
 
 ## Reference
 ### Installation
@@ -54,10 +51,12 @@ If you haven't used it, Rigify is a hugely powerful rig generator add-on that is
 
 The FishSim add-on doesn't need Rigify to be installed to work, but it does expect the rig to have been generated with Rigify from the standard Shark metarig. You can download a shark model rigged in a suitable way from here:  or make your own. Even if you have a model rigged using a different method, it should be quite easy to re-rig it using Rigify.
 
-One thing I've found with this rig is that it looks better if the 'curvature' parameter on the top and bottom part of the tail fin is set to 1.0 (makes the bendy bones fully bendy). Also the Head, Neck and Tail 'Follow' paramters should be set to 1.0 or at least fairly high.
+With version V0.2 of the FishSim addon, there is now a 'Goldfish' metarig available under the add/armature/fishsim/ menu next to the standard Rigify options. It's disabled unless the Rigify addon is enabled. This metarig is essentially the same as the shark metarig, except for more detailed and controllable pectoral fins.
+
+One thing I've found with these rigs is that they look better if the 'curvature' parameter on the top and bottom part of the tail fin is set to 1.0 (makes the bendy bones fully bendy). Also the Head, Neck and Tail 'Follow' paramters should be set to 1.0 or at least fairly high. In the case of the Goldfish rig, the top and bottom of each the pectoral fins should also have curvature set to 1.
 
 ### FishSim Tools Panel
-Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Panel on the left of a 3D view if an armature is selected in Pose or Object mode. The tab contains a 'FishSim' panel and a 'Simulations Properties' panel 
+Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Panel on the left of a 3D view if an armature is selected in Pose or Object mode. The tab contains a 'FishSim' panel, and a 'Main Simulations Properties' panel. If the selected rig was made from the 'Goldfish' metarig, then a 'Pectoral Fins Properties' panel will also be present. 
 
 ![Tools Panel](images/FSim_ToolPanel.png)
 
@@ -95,13 +94,19 @@ Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Pane
 
 ### Simulation Parameters
 
->Parameters affecting the swimming action of the fish can be found in the 'Simulation Parameters' panel after running the simulation. They can be adjusted as required to allow the model to better follow the target. The parameters are saved with the blend file, and different sets of parameters can be saved using the presets control.
+>Parameters affecting the swimming action of the fish can be found in the 'Main Simulation Parameters' panel after running the simulation. They can be adjusted as required to allow the model to better follow the target. The parameters are saved with the blend file, and different sets of parameters can be saved using the presets control.
 
->There are a lot of parameters, but in most cases only a have to be changed. I would suggest you setup a single armature with a target animated to move at a steady speed. Run the simulation for say 100 frames. If the model lags behind the target, decrease the tail 'Stroke Period' (flap faster) and/or increase the 'Power' (more push per tail flap). If the model overshoots the target repeatedly, or loops in a 360, do the opposite. To make the model turn faster, increase the 'Turn Assist' parameter.
+>If the rig has been created from the 'Goldfish' metarig, then the 'Pectoral Fin Properties' panel is visible, and contains parameters for controlling how the pectoral fins move and how the dynamics of the hovering movement.
+
+>There are a lot of parameters, but in most cases only a have to be changed. For a shark, I would suggest you setup a single armature with a target animated to move at a steady speed. Run the simulation for say 100 frames. If the model lags behind the target, decrease the tail 'Stroke Period' (flap faster) and/or increase the 'Power' (more push per tail flap). If the model overshoots the target repeatedly, or loops in a 360, do the opposite. To make the model turn faster, increase the 'Turn Assist' parameter. For a 'Goldfish' type rig, it might pay to make the target move in a jerkier way to get the effect of bursts of speed, then a hovering period.
 
 >The 'Mass' and 'Drag' parameters can be adjusted to affect the stopping speed, and the steadiness of the movement.
 
-### Simulation Parameter Reference
+>For the Goldfish rig, the 'Pectoral Fin Properties' panel is available. The 'Hover Mode Params' box is probably the most significant here. The 'Hover Distance' determines how close to the target the rig has to be in order to start transitioning from swimming to hovering. (The units are in lengths of the target box.) The 'Hover Transition Time' and the 'Swim Transition Time' control how quickly (in frames) the fish changes from swimming to hovering and back again.
+
+>The 'Variation Tuning' for the Goldfish model is also useful to tweak. The 'Pec Duration' and 'Pec duty cycle' allow the hovering action to take place is bursts of activity and then rest. A duty cycle of 1 allows for 50% of the time hovering with fin action and 50% floating. A duty cycle of 0 will cause the fish to paddle with the pectoral fins all the time during hovering. The 'Twitch' settings cause the fish to twist a little randomly every now and then while hovering.
+
+### Main Simulation Parameter Reference
 
 
 * Mass
@@ -191,6 +196,88 @@ Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Pane
 * Random
 
 >A number of the parameters can be adjusted by a random factor. If this parameter is 0.0 then there is no random influence. The default figure of 0.25 allows paramters including the Max Tail Angle and Power to be adjusted up or down as much as 25%. This is useful when simulating a school of fish to give variation in speed and turning.
+
+### Pectoral Fin (and Hover) Parameter Reference
+
+* Pectoral Effort Gain
+
+>Amount of effort to maintain position with 1.0 trying very hard to maintain
+
+* Pectoral Turn Assist
+
+>Turning Speed while hovering 5 is fast, .2 is slow
+
+* Pectoral Stroke Period
+
+>Maximum frequency of pectoral fin movement in frames per cycle
+
+* Max Pec Fin Angle
+
+>Max Pectoral Fin Angle
+
+* Pec Fin Tip Phase
+
+>How far the fin tip lags behind the main movement in degrees
+
+* Pectoral Stub Ratio
+
+>Ratio for the bottom part of the pectoral fin
+
+* Pec Fin Stiffness
+
+>Pectoral fin stiffness, with 1.0 being very stiff
+
+* Hover Transition Time
+
+>Speed of transition between swim and hover in seconds
+
+* Swim Transition Time
+
+>Speed of transition between hover and swim in seconds
+
+* Pectoral Offset
+
+>Adjustment to allow for different rest pose angles of the fins
+
+* Hover Distance
+
+>Distance from Target to begin Hover in lengths of the target box. A value of 0 will disable hovering, and the action will be similar to the shark rig.
+
+* Hover Tail Fraction
+
+>During Hover, the amount of swimming tail movement to retain. 1.0 is full movment, 0 is none
+
+* Hover Max Force
+
+>The maximum force the fins can apply in Hover Mode. 1.0 is quite fast
+
+* Hover Derate
+
+>In hover, the fish can't go backwards or sideways as fast. This parameter determines how much slower. 1.0 is the same.
+
+* Hover Tilt
+
+>The amount of forward/backward tilt in hover as the fish powers forward and backward. in Degrees and based on Max Hover Force
+
+* Pec Duration
+
+>The amount of hovering the fish can do before a rest. Duration in frames
+
+* Pec Duty Cycle
+
+>The amount of rest time compared to active time. 1.0 is 50/50, 0.0 is no rest
+
+* Hover Twitch
+
+>The size of twitching while in hover mode in degrees"
+
+* Hover Twitch Time
+
+>The time between twitching while in hover mode in frames
+
+* Pec Synch
+
+>If true then fins beat together, otherwise fins act out of phase
 
 
 
