@@ -1,7 +1,7 @@
 # FishSim - Goldfish Version
 
 #### Fish Swimming Simulation   
-V0.2.0 GoldFish Release - (Work in Progress)
+V0.2.0 GoldFish Release
 
 
 

@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.2.0 develop branch - Goldfish Version
+# version comment: V0.2.0 master branch - Goldfish Version
 
 bl_info = {
     "name": "FishSim",

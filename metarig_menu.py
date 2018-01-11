@@ -21,7 +21,7 @@
 # by the Rigify add-on and is disabled unless Rigify is enabled.
 #########
 
-# version comment: V0.2.0 develop branch - Goldfish Version
+# version comment: V0.2.0 master branch - Goldfish Version
 
 import os
 from string import capwords
