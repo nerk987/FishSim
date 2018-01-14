@@ -3,7 +3,7 @@
 #### Fish Swimming Simulation   
 V0.2.0 GoldFish Release
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.2.0/FishSim.zip) 
+Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/0.2.0/FishSim.zip) 
 
 
 
