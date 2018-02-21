@@ -19,12 +19,12 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.2.0 master branch - Goldfish Version
+# version comment: V0.2.1 - Goldfish Version - pec fin mod
 
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 2, 0),
+    "version": (0, 2, 1),
     "blender": (2, 78, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
@@ -199,6 +199,7 @@ class AddPresetFSim(AddPresetBase, Operator):
         "pFS.pHoverTwitch",
         "pFS.pHoverTwitchTime",
         "pFS.pPecSynch"
+        "pFS.pPecTransition"
         ]
 
     # where to store the preset
@@ -506,6 +507,7 @@ class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
         box.prop(pFS, "pPecStubRatio")
         box.prop(pFS, "pPecStiffness")
         box.prop(pFS, "pPecOffset")
+        box.prop(pFS, "pPecTransition")
         box = layout.box()
         box.label("Hover Mode Params")
         box.prop(pFS, "pHoverDist")

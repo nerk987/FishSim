@@ -1,9 +1,9 @@
 # FishSim - Goldfish Version
 
 #### Fish Swimming Simulation   
-V0.2.0 GoldFish Release
+V0.2.1 GoldFish Release (with pec fin improvment)
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/0.2.0/FishSim.zip) 
+Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/0.2.1/FishSim.zip) 
 
 
 
@@ -268,6 +268,10 @@ Once FishSim is loaded and enabled, a FishSim tab should appear on the Tool Pane
 * Pec Duty Cycle
 
 >The amount of rest time compared to active time. 1.0 is 50/50, 0.0 is no rest
+
+* Pec Transition
+
+>The speed that the pecs change between rest and flap - 1 is instant, 0.05 is fairly slow
 
 * Hover Twitch
 

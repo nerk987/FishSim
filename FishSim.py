@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.2.0 master branch - Goldfish Version
+# version comment: V0.2.1 master branch - Goldfish Version - pec fin improvement
 
 import bpy
 import mathutils,  math, os
@@ -85,6 +85,7 @@ class FSimProps(bpy.types.PropertyGroup):
     pHoverTilt = FloatProperty(name="Hover Tilt", description="The amount of forward/backward tilt in hover as the fish powers forward and backward. in Degrees and based on Max Hover Force", default=4.0, min=-0.0, max=40.0)
     pPecDuration = FloatProperty(name="Pec Duration", description="The amount of hovering the fish can do before a rest. Duration in frames", default=50.0, min=-5.0)
     pPecDuty = FloatProperty(name="Pec Duty Cycle", description="The amount of rest time compared to active time. 1.0 is 50/50, 0.0 is no rest", default=0.8, min=0.0)
+    pPecTransition = FloatProperty(name="Pec Transition to rest speed", description="The speed that the pecs change between rest and flap - 1 is instant, 0.05 is fairly slow", default=0.05, min=0.0, max=1.0)
     pHoverTwitch = FloatProperty(name="Hover Twitch", description="The size of twitching while in hover mode in degrees", default=4.0, min=0.0, max=60.0)
     pHoverTwitchTime = FloatProperty(name="Hover Twitch Time", description="The time between twitching while in hover mode in frames", default=40.0, min=0.0)
     pPecSynch = BoolProperty(name="Pec Synch", description="If true then fins beat together, otherwise fins act out of phase", default=False)
@@ -170,7 +171,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
     
     def RemoveKeyframes(self, armature, bones):
         dispose_paths = []
-        print("Bones:")
+        #print("Bones:")
         #dispose_paths.append('pose.bones["{}"].rotation_quaternion'.format(bone.name))
         for fcurve in armature.animation_data.action.fcurves:
             if (fcurve.data_path == "location" or fcurve.data_path == "rotation_euler"):
@@ -377,7 +378,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
     def PecSimulation(self, nFrame, pFS, startFrame):
         # print("Pecs")
-        if self.sPecFinTopL == None or self.sPecFinTopL == None:
+        if self.sPecFinTopL == None or self.sPecFinTopR == None:
             return
         
         #Update State and main angle
@@ -388,17 +389,18 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #Rest Period Calculations
 
         if nFrame >= self.sRestartFrame:
-            self.sRestAmount = max(0.0, self.sRestAmount - 0.2)
+            self.sRestAmount = max(0.0, self.sRestAmount - pFS.pPecTransition)
             if self.sRestAmount < 0.1:
                 self.sRestFrame = nFrame + pFS.pPecDuration
                 self.sRestartFrame = self.sRestFrame + pFS.pPecDuty * pFS.pPecDuration 
             
         if (nFrame >= self.sRestFrame and nFrame < self.sRestartFrame and self.sRestAmount < 1.0):
-            self.sRestAmount = min(1.0, self.sRestAmount + 0.2)
+            self.sRestAmount = min(1.0, self.sRestAmount + pFS.pPecTransition)
             
         # print("RestAmount: ", self.sRestAmount, self.sRestFrame, self.sRestartFrame)
         
-        #
+        #Add the same side fin wobble to the pec fins to stop them looking boring when not flapping
+        SideFinRot = math.radians(math.sin(math.radians(self.sState + pFS.pSideFinPhase)) * pFS.pMaxSideFinAngle)
 
         #Slerp between oscillating angle and rest angle depending on hover status and reset periods
         # xRestAmount = 1 means no flapping due to either resting or not hovering
@@ -409,7 +411,8 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         yAng = mathutils.Quaternion((0.0, 1.0, 0.0), yPecAngle)
         # yAng = mathutils.Quaternion((0.0, 1.0, 0.0), 0)
         xAng = yAng * mathutils.Quaternion((1.0, 0.0, 0.0), -xPecAngle)
-        self.sPecFinPalmL.rotation_quaternion = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
+        xAng = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
+        self.sPecFinPalmL.rotation_quaternion = xAng * mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
         self.sPecFinPalmL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         # print("Palm Animate: ", nFrame)
 
@@ -429,13 +432,15 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         if not pFS.pPecSynch:
             yAng = mathutils.Quaternion((0.0, 1.0, 0.0), yPecAngle)
             xAng = yAng * mathutils.Quaternion((1.0, 0.0, 0.0), xPecAngle)
-            self.sPecFinPalmR.rotation_quaternion = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
+            xAng = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
+            self.sPecFinPalmR.rotation_quaternion = xAng * mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
             self.sPecFinTopR.scale[1] = 1/self.sPec_scale
             self.sPecFinBottomR.scale[1] = 1 - (1 - 1/self.sPec_scale) * pFS.pPecStubRatio
         else:
             yAng = mathutils.Quaternion((0.0, 1.0, 0.0), -yPecAngle)
             xAng = yAng * mathutils.Quaternion((1.0, 0.0, 0.0), -xPecAngle)
-            self.sPecFinPalmR.rotation_quaternion = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
+            xAng = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
+            self.sPecFinPalmR.rotation_quaternion = xAng * mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
             self.sPecFinTopR.scale[1] = self.sPec_scale
             self.sPecFinBottomR.scale[1] = 1 - (1 - self.sPec_scale) * pFS.pPecStubRatio
         self.sPecFinPalmR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
@@ -474,7 +479,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #Convert effort into tail frequency and amplitude (Fades to a low value if in hover mode)
         pFS.pFreq = self.rMaxFreq * ((1-self.sHoverMode) * (1.0/(pFS.sEffort+ 0.01)) + self.sHoverMode * 2.0)
         pFS.pTailAngle = self.rMaxTailAngle * ((1-self.sHoverMode) * pFS.sEffort + self.sHoverMode * pFS.pHoverTailFrc)
-        print("rMax, Frc: %.2f, %.2f" % (self.rMaxTailAngle, pFS.pHoverTailFrc))
+        #print("rMax, Frc: %.2f, %.2f" % (self.rMaxTailAngle, pFS.pHoverTailFrc))
         
         #Convert direction into Tail Offset angle (Work out swim turn angle and Hover turn angle and mix)
         xSwimTailAngleOffset = RqdDirection * pFS.pMaxSteeringAngle
@@ -502,15 +507,15 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
                 #set a new twitch target angle
                 self.sTwitchTarget = pFS.pHoverTwitch * 2.0 * (random() - 0.5)
         self.sTwitchAngle = self.sTwitchAngle * 0.9 + 0.1 * self.sTwitchTarget
-        print("Twitch Angle: ", self.sTwitchAngle)
+        #print("Twitch Angle: ", self.sTwitchAngle)
             
         
         
         #Spine Movement
         self.sState = self.sState + 360.0 / pFS.pFreq
         xTailAngle = math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle) + math.radians(pFS.sTailAngleOffset) + math.radians(self.sTwitchAngle)
-        print("Components: %.2f, %.2f, %.2f" % (math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle),math.radians(pFS.sTailAngleOffset),math.radians(self.sTwitchAngle)))
-        print("TailAngle", math.degrees(xTailAngle))
+        #print("Components: %.2f, %.2f, %.2f" % (math.sin(math.radians(self.sState))*math.radians(pFS.pTailAngle),math.radians(pFS.sTailAngleOffset),math.radians(self.sTwitchAngle)))
+        #print("TailAngle", math.degrees(xTailAngle))
         self.sSpine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
         self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         ChestRot = mathutils.Quaternion((0.0, 0.0, 1.0), -xTailAngle * pFS.pChestRatio)# - math.radians(pFS.sTailAngleOffset))
