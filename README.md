@@ -8,6 +8,10 @@ Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/downlo
 
 
 ## New in This Release
+v0.2.1
+Added body movement to pectoral fins while swimming or resting to look more natural
+
+v0.2.0
 * New Goldfish Rigify metarig available when both FishSim and Rigify are enabled
 * The simulation will now optionally allow the fish to 'hover' using pectoral fin oscillation and air bladder.
 * The new Pectoral Fin and Hover parameters are enabled when a rig created from the 'GoldFish' metarig is selected.
