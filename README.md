@@ -3,7 +3,7 @@
 #### Fish Swimming Simulation   
 V0.2.1 GoldFish Release (with pec fin improvment)
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/V0.2.1/FishSim.zip) 
+Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/v0.2.1/FishSim.zip) 
 
 
 
