@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.2.1 master branch - Goldfish Version - pec fin improvement
+# version comment: V0.3.0 - Goldfish Version - Blender 2.8
 
 import bpy
 import mathutils,  math, os

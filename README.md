@@ -1,13 +1,16 @@
 # FishSim - Goldfish Version
 
 #### Fish Swimming Simulation   
-V0.2.1 GoldFish Release (with pec fin improvment)
+V0.3.0 GoldFish Release for Blender 2.8
 
-Addon Download: [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/v0.2.1/FishSim.zip) 
+Addon Download (Link for 2.8 zip not ready yet): [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/v0.2.1/FishSim.zip) 
 
 
 
 ## New in This Release
+v0.3.0
+Converted for Blender 2.8
+
 v0.2.1
 Added body movement to pectoral fins while swimming or resting to look more natural
 
