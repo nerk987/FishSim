@@ -19,13 +19,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.2.1 - Goldfish Version - pec fin mod
+# version comment: V0.3.0 - Goldfish Version - Blender 2.8
 
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 2, 1),
-    "blender": (2, 78, 0),
+    "version": (0, 3, 0),
+    "blender": (2, 80, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",
@@ -63,14 +63,14 @@ def add_preset_files():
 
 
 class FSimMainProps(bpy.types.PropertyGroup):
-    fsim_targetrig = StringProperty(name="Name of the target rig", default="")  
-    fsim_start_frame = IntProperty(name="Simulation Start Frame", default=1)  
-    fsim_end_frame = IntProperty(name="Simulation End Frame", default=250)  
-    fsim_maxnum = IntProperty(name="Maximum number of copies", default=250)  
-    fsim_copyrigs = BoolProperty(name="Distribute multiple copies of the rig", default=False)  
-    fsim_copymesh = BoolProperty(name="Distribute multiple copies of meshes", default=False)  
-    fsim_multisim = BoolProperty(name="Simulate the multiple rigs", default=False)  
-    fsim_startangle = FloatProperty(name="Angle to Target", default=0.0)
+    fsim_targetrig : StringProperty(name="Name of the target rig", default="")  
+    fsim_start_frame : IntProperty(name="Simulation Start Frame", default=1)  
+    fsim_end_frame : IntProperty(name="Simulation End Frame", default=250)  
+    fsim_maxnum : IntProperty(name="Maximum number of copies", default=250)  
+    fsim_copyrigs : BoolProperty(name="Distribute multiple copies of the rig", default=False)  
+    fsim_copymesh : BoolProperty(name="Distribute multiple copies of meshes", default=False)  
+    fsim_multisim : BoolProperty(name="Simulate the multiple rigs", default=False)  
+    fsim_startangle : FloatProperty(name="Angle to Target", default=0.0)
     
 
 
@@ -120,7 +120,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box.location = TargetRig.location
         bound_box.rotation_euler = TargetRig.rotation_euler
         bound_box.name = TargetRoot["TargetProxy"]
-        bound_box.draw_type = 'WIRE'
+        bound_box.display_type = 'WIRE'
         bound_box.hide_render = True
         bound_box.cycles_visibility.camera = False
         bound_box.cycles_visibility.diffuse = False
@@ -128,7 +128,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
         # if "FSim" in bound_box:
             # print("FSim Found")
-        bound_box.select = False
+        # bound_box.select = False
         #context.active_pose_bone = TargetRoot
         
         return {'FINISHED'}
@@ -363,10 +363,10 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
 class ARMATURE_PT_FSim(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
-    bl_label = "FishSim"
+    bl_label = "FishSim"   
     bl_idname = "armature.fsim"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = "FishSim"
     #bl_context = "objectmode"
     
@@ -385,31 +385,31 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         obj1 = context.object
         scene = context.scene
         
+        # row = layout.row()
+        layout.label(text="Animation Ranges")
+        # row = layout.row()
+        layout.prop(scene.FSimMainProps, "fsim_start_frame")
+        # row = layout.row()
+        layout.prop(scene.FSimMainProps, "fsim_end_frame")
         row = layout.row()
-        row.label("Animation Ranges")
+        layout.operator("armature.fsim_add")
         row = layout.row()
-        row.prop(scene.FSimMainProps, "fsim_start_frame")
+        layout.operator("armature.fsimulate")
         row = layout.row()
-        row.prop(scene.FSimMainProps, "fsim_end_frame")
-        row = layout.row()
-        row.operator("armature.fsim_add")
-        row = layout.row()
-        row.operator("armature.fsimulate")
-        row = layout.row()
-        box = layout.box()
-        # box.label("Multi Sim Options")
-        box.operator("armature.fsim_run")
-        box.prop(scene.FSimMainProps, "fsim_copyrigs")
-        box.prop(scene.FSimMainProps, "fsim_copymesh")
-        box.prop(scene.FSimMainProps, "fsim_maxnum")
-        box.prop(scene.FSimMainProps, "fsim_startangle")
+        # box = layout.box()
+        # box.label(text="Multi Sim Options")
+        layout.operator("armature.fsim_run")
+        layout.prop(scene.FSimMainProps, "fsim_copyrigs")
+        layout.prop(scene.FSimMainProps, "fsim_copymesh")
+        layout.prop(scene.FSimMainProps, "fsim_maxnum")
+        layout.prop(scene.FSimMainProps, "fsim_startangle")
 
 class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
     """Creates a Panel in the Tool Panel"""
     bl_label = "Main Simulation Properties"
     bl_idname = "armature.fsimproppanel"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = "FishSim"
     #bl_context = "objectmode"
     
@@ -427,49 +427,50 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         layout = self.layout
 
         scene = context.scene
+        # row = layout.row()
         row = layout.row()
         row.menu("AMATURE_MT_fsim_presets", text=bpy.types.AMATURE_MT_fsim_presets.bl_label)
-        row.operator(AddPresetFSim.bl_idname, text="", icon='ZOOMIN')
-        row.operator(AddPresetFSim.bl_idname, text="", icon='ZOOMOUT').remove_active = True        
+        row.operator(AddPresetFSim.bl_idname, text="", icon='TRIA_UP')
+        row.operator(AddPresetFSim.bl_idname, text="", icon='TRIA_UP').remove_active = True        
         
         pFS = context.scene.FSimProps
-        box = layout.box()
-        box.label("Main Parameters")
-        box.prop(pFS, "pMass")
-        box.prop(pFS, "pDrag")
-        box.prop(pFS, "pPower")
-        box.prop(pFS, "pMaxFreq")
-        box.prop(pFS, "pMaxTailAngle")
-        box = layout.box()
-        box.label("Turning Parameters")
-        box.prop(pFS, "pAngularDrag")
-        box.prop(pFS, "pMaxSteeringAngle")
-        box.prop(pFS, "pTurnAssist")
-        box.prop(pFS, "pLeanIntoTurn")
-        box = layout.box()
-        box.label("Target Tracking")
-        box.prop(pFS, "pEffortGain")
-        box.prop(pFS, "pEffortIntegral")
-        box.prop(pFS, "pEffortRamp")
-        box = layout.box()
-        box.label("Fine Tuning")
-        box.prop(pFS, "pMaxTailFinAngle")
-        box.prop(pFS, "pTailFinPhase")
-        box.prop(pFS, "pTailFinStiffness")
-        box.prop(pFS, "pTailFinStubRatio")
-        box.prop(pFS, "pMaxSideFinAngle")
-        box.prop(pFS, "pSideFinPhase")
-        box.prop(pFS, "pChestRatio")
-        box.prop(pFS, "pChestRaise")
-        box.prop(pFS, "pMaxVerticalAngle")
-        box.prop(pFS, "pRandom")
+        # row = layout.row()
+        layout.label(text="Main Parameters")
+        layout.prop(pFS, "pMass")
+        layout.prop(pFS, "pDrag")
+        layout.prop(pFS, "pPower")
+        layout.prop(pFS, "pMaxFreq")
+        layout.prop(pFS, "pMaxTailAngle")
+        # row = layout.row()
+        layout.label(text="Turning Parameters")
+        layout.prop(pFS, "pAngularDrag")
+        layout.prop(pFS, "pMaxSteeringAngle")
+        layout.prop(pFS, "pTurnAssist")
+        layout.prop(pFS, "pLeanIntoTurn")
+        # row = layout.row()
+        layout.label(text="Target Tracking")
+        layout.prop(pFS, "pEffortGain")
+        layout.prop(pFS, "pEffortIntegral")
+        layout.prop(pFS, "pEffortRamp")
+        # row = layout.row()
+        layout.label(text="Fine Tuning")
+        layout.prop(pFS, "pMaxTailFinAngle")
+        layout.prop(pFS, "pTailFinPhase")
+        layout.prop(pFS, "pTailFinStiffness")
+        layout.prop(pFS, "pTailFinStubRatio")
+        layout.prop(pFS, "pMaxSideFinAngle")
+        layout.prop(pFS, "pSideFinPhase")
+        layout.prop(pFS, "pChestRatio")
+        layout.prop(pFS, "pChestRaise")
+        layout.prop(pFS, "pMaxVerticalAngle")
+        layout.prop(pFS, "pRandom")
 
 class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
     """Creates a Panel in the Tool Panel"""
     bl_label = "Pectoral Fin Properties"
     bl_idname = "armature.fsimpecpanel"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = "FishSim"
     #bl_context = "objectmode"
     
@@ -496,66 +497,91 @@ class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
         
         pFS = context.scene.FSimProps
         box = layout.box()
-        box.label("Main Pec Parameters")
-        box.prop(pFS, "pPecEffortGain")
-        box.prop(pFS, "pPecTurnAssist")
-        box.prop(pFS, "pMaxPecFreq")
-        box.prop(pFS, "pMaxPecAngle")
+        layout.label(text="Main Pec Parameters")
+        layout.prop(pFS, "pPecEffortGain")
+        layout.prop(pFS, "pPecTurnAssist")
+        layout.prop(pFS, "pMaxPecFreq")
+        layout.prop(pFS, "pMaxPecAngle")
         box = layout.box()
-        box.label("Pec Fin Tuning")
-        box.prop(pFS, "pPecPhase")
-        box.prop(pFS, "pPecStubRatio")
-        box.prop(pFS, "pPecStiffness")
-        box.prop(pFS, "pPecOffset")
-        box.prop(pFS, "pPecTransition")
+        layout.label(text="Pec Fin Tuning")
+        layout.prop(pFS, "pPecPhase")
+        layout.prop(pFS, "pPecStubRatio")
+        layout.prop(pFS, "pPecStiffness")
+        layout.prop(pFS, "pPecOffset")
+        layout.prop(pFS, "pPecTransition")
         box = layout.box()
-        box.label("Hover Mode Params")
-        box.prop(pFS, "pHoverDist")
-        box.prop(pFS, "pHTransTime")
-        box.prop(pFS, "pSTransTime")
-        box.prop(pFS, "pHoverTailFrc")
-        box.prop(pFS, "pHoverMaxForce")
-        box.prop(pFS, "pHoverDerate")
-        box.prop(pFS, "pHoverTilt")
+        layout.label(text="Hover Mode Params")
+        layout.prop(pFS, "pHoverDist")
+        layout.prop(pFS, "pHTransTime")
+        layout.prop(pFS, "pSTransTime")
+        layout.prop(pFS, "pHoverTailFrc")
+        layout.prop(pFS, "pHoverMaxForce")
+        layout.prop(pFS, "pHoverDerate")
+        layout.prop(pFS, "pHoverTilt")
         box = layout.box()
-        box.label("Variation Tuning")
-        box.prop(pFS, "pPecDuration")
-        box.prop(pFS, "pPecDuty")
-        box.prop(pFS, "pHoverTwitch")
-        box.prop(pFS, "pHoverTwitchTime")
-        box.prop(pFS, "pPecSynch")
+        layout.label(text="Variation Tuning")
+        layout.prop(pFS, "pPecDuration")
+        layout.prop(pFS, "pPecDuty")
+        layout.prop(pFS, "pHoverTwitch")
+        layout.prop(pFS, "pHoverTwitchTime")
+        layout.prop(pFS, "pPecSynch")
+
+#Register
+        
+classes = (
+    FSimMainProps,
+    ARMATURE_OT_FSim_Add,
+    ARMATURE_PT_FSim,
+    ARMATURE_PT_FSimPropPanel,
+    ARMATURE_PT_FSimPecPanel,
+    AMATURE_MT_fsim_presets,
+    AddPresetFSim,
+    ARMATURE_OT_FSim_Run,
+)
 
 def register():
-    bpy.utils.register_class(FSimMainProps)
+    from bpy.utils import register_class
+
+    # Classes.
+    for cls in classes:
+        register_class(cls)
+
+    # bpy.utils.register_class(FSimMainProps)
     bpy.types.Scene.FSimMainProps = bpy.props.PointerProperty(type=FSimMainProps)
-    bpy.utils.register_class(ARMATURE_OT_FSim_Add)
+    # bpy.utils.register_class(ARMATURE_OT_FSim_Add)
     from . import FishSim
     FishSim.registerTypes()
     from . import metarig_menu
     metarig_menu.register()
-    bpy.utils.register_class(ARMATURE_PT_FSim)
-    bpy.utils.register_class(ARMATURE_PT_FSimPropPanel)
-    bpy.utils.register_class(ARMATURE_PT_FSimPecPanel)
-    bpy.utils.register_class(AMATURE_MT_fsim_presets)
-    bpy.utils.register_class(AddPresetFSim)
-    bpy.utils.register_class(ARMATURE_OT_FSim_Run)
+    # bpy.utils.register_class(ARMATURE_PT_FSim)
+    # bpy.utils.register_class(ARMATURE_PT_FSimPropPanel)
+    # bpy.utils.register_class(ARMATURE_PT_FSimPecPanel)
+    # bpy.utils.register_class(AMATURE_MT_fsim_presets)
+    # bpy.utils.register_class(AddPresetFSim)
+    # bpy.utils.register_class(ARMATURE_OT_FSim_Run)
     
 
 
 def unregister():
+    from bpy.utils import unregister_class
     del bpy.types.Scene.FSimMainProps
-    bpy.utils.unregister_class(FSimMainProps)
-    bpy.utils.unregister_class(ARMATURE_OT_FSim_Add)
-    from . import FishSim
-    FishSim.unregisterTypes()
+    # bpy.utils.unregister_class(FSimMainProps)
+    # bpy.utils.unregister_class(ARMATURE_OT_FSim_Add)
     from . import metarig_menu
     metarig_menu.unregister()
-    bpy.utils.unregister_class(ARMATURE_PT_FSim)
-    bpy.utils.unregister_class(ARMATURE_PT_FSimPropPanel)
-    bpy.utils.unregister_class(ARMATURE_PT_FSimPecPanel)
-    bpy.utils.unregister_class(AMATURE_MT_fsim_presets)
-    bpy.utils.unregister_class(AddPresetFSim)
-    bpy.utils.unregister_class(ARMATURE_OT_FSim_Run)
+    from . import FishSim
+    FishSim.unregisterTypes()
+
+    # Classes.
+    for cls in classes:
+        unregister_class(cls)
+    
+    # bpy.utils.unregister_class(ARMATURE_PT_FSim)
+    # bpy.utils.unregister_class(ARMATURE_PT_FSimPropPanel)
+    # bpy.utils.unregister_class(ARMATURE_PT_FSimPecPanel)
+    # bpy.utils.unregister_class(AMATURE_MT_fsim_presets)
+    # bpy.utils.unregister_class(AddPresetFSim)
+    # bpy.utils.unregister_class(ARMATURE_OT_FSim_Run)
 
 
 if __name__ == "__main__":

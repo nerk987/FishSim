@@ -104,7 +104,7 @@ class FSArmatureSubMenu(bpy.types.Menu):
             layout.enabled = True
         else:
             layout.enabled = False
-        layout.label(self.bl_label)
+        layout.label(text=self.bl_label)
         for op, name in self.operators:
             text = capwords(name.replace("_", " ")) + " (Meta-Rig)"
             layout.operator(op, icon='OUTLINER_OB_ARMATURE', text=text)
@@ -120,6 +120,7 @@ def get_metarig_list(path, depth=0):
     MODULE_DIR = os.path.dirname(__file__)
     METARIG_DIR_ABS = os.path.join(MODULE_DIR, METARIG_DIR)
     SEARCH_DIR_ABS = os.path.join(METARIG_DIR_ABS, path)
+    # print("Metarig Pathname: ", SEARCH_DIR_ABS)
     files = os.listdir(SEARCH_DIR_ABS)
     files.sort()
 
@@ -231,36 +232,64 @@ for metarig_class in metarig_classes:
     for mop, name in metarig_ops[metarig_class]:
         arm_sub = next((e for e in armature_submenus if e.bl_label == metarig_class + ' (submenu)'), '')
         arm_sub.operators.append((mop.bl_idname, name,))
-
+        
 def register():
+    from bpy.utils import register_class
+
     for cl in metarig_ops:
         for mop, name in metarig_ops[cl]:
-            bpy.utils.register_class(mop)
+            register_class(mop)
 
     for arm_sub in armature_submenus:
-        bpy.utils.register_class(arm_sub)
+        register_class(arm_sub)
 
     for mf in menu_funcs:
-        bpy.types.INFO_MT_armature_add.append(mf)
-
-# # From rigify __init__
-    # bpy.utils.register_class(RigifyColorSet)
-    # bpy.utils.register_class(RigifyArmatureLayer)
-    # bpy.types.Armature.rigify_layers = bpy.props.CollectionProperty(type=RigifyArmatureLayer)
-    # bpy.types.PoseBone.rigify_type = bpy.props.StringProperty(name="Rigify Type", description="Rig type for this bone")
-    # bpy.types.Armature.rigify_colors = bpy.props.CollectionProperty(type=RigifyColorSet)
+        bpy.types.VIEW3D_MT_armature_add.append(mf)
 
 
 def unregister():
+    from bpy.utils import unregister_class
+
     for cl in metarig_ops:
         for mop, name in metarig_ops[cl]:
-            bpy.utils.unregister_class(mop)
+            unregister_class(mop)
 
     for arm_sub in armature_submenus:
-        bpy.utils.unregister_class(arm_sub)
+        unregister_class(arm_sub)
 
     for mf in menu_funcs:
-        bpy.types.INFO_MT_armature_add.remove(mf)
+        bpy.types.VIEW3D_MT_armature_add.remove(mf)
+
+
+# def register():
+    # for cl in metarig_ops:
+        # for mop, name in metarig_ops[cl]:
+            # bpy.utils.register_class(mop)
+
+    # for arm_sub in armature_submenus:
+        # bpy.utils.register_class(arm_sub)
+
+    # for mf in menu_funcs:
+        # bpy.types.INFO_MT_armature_add.append(mf)
+
+# # # From rigify __init__
+    # # bpy.utils.register_class(RigifyColorSet)
+    # # bpy.utils.register_class(RigifyArmatureLayer)
+    # # bpy.types.Armature.rigify_layers = bpy.props.CollectionProperty(type=RigifyArmatureLayer)
+    # # bpy.types.PoseBone.rigify_type = bpy.props.StringProperty(name="Rigify Type", description="Rig type for this bone")
+    # # bpy.types.Armature.rigify_colors = bpy.props.CollectionProperty(type=RigifyColorSet)
+
+
+# def unregister():
+    # for cl in metarig_ops:
+        # for mop, name in metarig_ops[cl]:
+            # bpy.utils.unregister_class(mop)
+
+    # for arm_sub in armature_submenus:
+        # bpy.utils.unregister_class(arm_sub)
+
+    # for mf in menu_funcs:
+        # bpy.types.INFO_MT_armature_add.remove(mf)
 
 # # From rigify __init__
     # bpy.utils.unregister_class(RigifySelectionColors)

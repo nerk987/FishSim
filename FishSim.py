@@ -33,62 +33,62 @@ from random import random
 class FSimProps(bpy.types.PropertyGroup):
     
     #State Variables
-    sVelocity = FloatVectorProperty(name="Velocity", description="Speed", subtype='XYZ', default=(0.0,0.0,0.0), min=-5.0, max=5.0)
-    sEffort = FloatProperty(name="Effort", description="The effort going into swimming", default=1.0, min=0)
-    sTurn = FloatProperty(name="Turn", description="The intent to go left of right (positive is right)", default=0.0)
-    sRise = FloatProperty(name="Rise", description="The intent to go up or down (positive is up", default=0.0)
-    sFreq = FloatProperty(name="Frequency", description="Current frequency of tail movement in frames per cycle", default=0.0)
-    sTailAngle = FloatProperty(name="Tail Angle", description="Current max tail angle in degrees", default=0.0)
-    sTailAngleOffset = FloatProperty(name="Tail Angle Offset", description="Offset angle for turning in degrees", default=0.0)
+    sVelocity : FloatVectorProperty(name="Velocity", description="Speed", subtype='XYZ', default=(0.0,0.0,0.0), min=-5.0, max=5.0)
+    sEffort : FloatProperty(name="Effort", description="The effort going into swimming", default=1.0, min=0)
+    sTurn : FloatProperty(name="Turn", description="The intent to go left of right (positive is right)", default=0.0)
+    sRise : FloatProperty(name="Rise", description="The intent to go up or down (positive is up", default=0.0)
+    sFreq : FloatProperty(name="Frequency", description="Current frequency of tail movement in frames per cycle", default=0.0)
+    sTailAngle : FloatProperty(name="Tail Angle", description="Current max tail angle in degrees", default=0.0)
+    sTailAngleOffset : FloatProperty(name="Tail Angle Offset", description="Offset angle for turning in degrees", default=0.0)
 
     #Property declaration
-    pMass = FloatProperty(name="Mass", description="Total Mass", default=30.0, min=0, max=3000.0)
-    pDrag = FloatProperty(name="Drag", description="Total Drag", default=8.0, min=0, max=3000.0)
-    pPower = FloatProperty(name="Power", description="Forward force for given tail fin speed and angle", default=1.0, min=0)
-    pMaxFreq = FloatProperty(name="Stroke Period", description="Maximum frequency of tail movement in frames per cycle", default=15.0)
-    pEffortGain = FloatProperty(name="Effort Gain", description="The amount of effort required for a change in distance to target", default=0.5, min=0.0)
-    pEffortIntegral = FloatProperty(name="Effort Integral", description="The amount of effort required for a continuing distance to target", default=0.5, min=0.0)
-    pEffortRamp = FloatProperty(name="Effort Ramp", description="First Order factor for ramping up effort", default=0.2, min=0.0, max=0.6)
-    pAngularDrag = FloatProperty(name="AngularDrag", description="Resistance to changing direction", default=1.0, min=0)
-    pTurnAssist = FloatProperty(name="TurnAssist", description="Fake Turning effect (0 - 10)", default=3.0, min=0)
-    pMaxTailAngle = FloatProperty(name="Max Tail Angle", description="Max tail angle", default=15.0, min=0, max=30.0)
-    pMaxSteeringAngle = FloatProperty(name="Max Steering Angle", description="Max steering tail angle", default=15.0, min=0, max=40.0)
-    pMaxVerticalAngle = FloatProperty(name="Max Vertical Angle", description="Max steering angle for vertical", default=0.1, min=0, max=40.0)
-    pMaxTailFinAngle = FloatProperty(name="Max Tail Fin Angle", description="Max tail fin angle", default=15.0, min=0, max=30.0)
-    pTailFinPhase = FloatProperty(name="Tail Fin Phase", description="Tail Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
-    pTailFinStiffness = FloatProperty(name="Tail Fin Stiffness", description="Tail Fin Stiffness", default=1.0, min=0, max=2.0)
-    pTailFinStubRatio = FloatProperty(name="Tail Fin Stub Ratio", description="Ratio for the bottom part of the tail", default=0.3, min=0, max=3.0)
-    pMaxSideFinAngle = FloatProperty(name="Max Side Fin Angle", description="Max side fin angle", default=5.0, min=0, max=60.0)
-    pSideFinPhase = FloatProperty(name="Side Fin Phase", description="Side Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
-    # pSideFinStiffness = FloatProperty(name="Side Fin Stiffness", description="Side Fin Stiffness", default=0.2, min=0, max=10.0)
-    pChestRatio = FloatProperty(name="Chest Ratio", description="Ratio of the front of the fish to the rear", default=0.5, min=0, max=2.0)
-    pChestRaise = FloatProperty(name="Chest Raise Factor", description="Chest raises during turning", default=1.0, min=0, max=20.0)
-    pLeanIntoTurn = FloatProperty(name="LeanIntoTurn", description="Amount it leans into the turns", default=1.0, min=0, max=20.0)
-    pRandom = FloatProperty(name="Random", description="Random amount", default=0.25, min=0, max=1.0)
+    pMass : FloatProperty(name="Mass", description="Total Mass", default=30.0, min=0, max=3000.0)
+    pDrag : FloatProperty(name="Drag", description="Total Drag", default=8.0, min=0, max=3000.0)
+    pPower : FloatProperty(name="Power", description="Forward force for given tail fin speed and angle", default=1.0, min=0)
+    pMaxFreq : FloatProperty(name="Stroke Period", description="Maximum frequency of tail movement in frames per cycle", default=15.0)
+    pEffortGain : FloatProperty(name="Effort Gain", description="The amount of effort required for a change in distance to target", default=0.5, min=0.0)
+    pEffortIntegral : FloatProperty(name="Effort Integral", description="The amount of effort required for a continuing distance to target", default=0.5, min=0.0)
+    pEffortRamp : FloatProperty(name="Effort Ramp", description="First Order factor for ramping up effort", default=0.2, min=0.0, max=0.6)
+    pAngularDrag : FloatProperty(name="AngularDrag", description="Resistance to changing direction", default=1.0, min=0)
+    pTurnAssist : FloatProperty(name="TurnAssist", description="Fake Turning effect (0 - 10)", default=3.0, min=0)
+    pMaxTailAngle : FloatProperty(name="Max Tail Angle", description="Max tail angle", default=15.0, min=0, max=30.0)
+    pMaxSteeringAngle : FloatProperty(name="Max Steering Angle", description="Max steering tail angle", default=15.0, min=0, max=40.0)
+    pMaxVerticalAngle : FloatProperty(name="Max Vertical Angle", description="Max steering angle for vertical", default=0.1, min=0, max=40.0)
+    pMaxTailFinAngle : FloatProperty(name="Max Tail Fin Angle", description="Max tail fin angle", default=15.0, min=0, max=30.0)
+    pTailFinPhase : FloatProperty(name="Tail Fin Phase", description="Tail Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
+    pTailFinStiffness : FloatProperty(name="Tail Fin Stiffness", description="Tail Fin Stiffness", default=1.0, min=0, max=2.0)
+    pTailFinStubRatio : FloatProperty(name="Tail Fin Stub Ratio", description="Ratio for the bottom part of the tail", default=0.3, min=0, max=3.0)
+    pMaxSideFinAngle : FloatProperty(name="Max Side Fin Angle", description="Max side fin angle", default=5.0, min=0, max=60.0)
+    pSideFinPhase : FloatProperty(name="Side Fin Phase", description="Side Fin phase offset from tail movement in degrees", default=90.0, min=45.0, max=135.0)
+    # pSideFinStiffness : FloatProperty(name="Side Fin Stiffness", description="Side Fin Stiffness", default=0.2, min=0, max=10.0)
+    pChestRatio : FloatProperty(name="Chest Ratio", description="Ratio of the front of the fish to the rear", default=0.5, min=0, max=2.0)
+    pChestRaise : FloatProperty(name="Chest Raise Factor", description="Chest raises during turning", default=1.0, min=0, max=20.0)
+    pLeanIntoTurn : FloatProperty(name="LeanIntoTurn", description="Amount it leans into the turns", default=1.0, min=0, max=20.0)
+    pRandom : FloatProperty(name="Random", description="Random amount", default=0.25, min=0, max=1.0)
 
     #Pectoral Fin Properties
-    pPecEffortGain = FloatProperty(name="Pectoral Effort Gain", description="Amount of effort to maintain position with 1.0 trying very hard to maintain", default=0.25, min=0, max=1.0)
-    pPecTurnAssist = FloatProperty(name="Pectoral Turn Assist", description="Turning Speed while hovering 5 is fast, .2 is slow", default=1.0, min=0, max=20.0)
+    pPecEffortGain : FloatProperty(name="Pectoral Effort Gain", description="Amount of effort to maintain position with 1.0 trying very hard to maintain", default=0.25, min=0, max=1.0)
+    pPecTurnAssist : FloatProperty(name="Pectoral Turn Assist", description="Turning Speed while hovering 5 is fast, .2 is slow", default=1.0, min=0, max=20.0)
 
-    pMaxPecFreq = FloatProperty(name="Pectoral Stroke Period", description="Maximum frequency of pectoral fin movement in frames per cycle", default=15.0, min=0)
-    pMaxPecAngle = FloatProperty(name="Max Pec Fin Angle", description="Max Pectoral Fin Angle", default=20.0, min=0, max=80)
-    pPecPhase = FloatProperty(name="Pec Fin Tip Phase", description="How far the fin tip lags behind the main movement in degrees", default=90.0, min=0, max=180)
-    pPecStubRatio = FloatProperty(name="Pectoral Stub Ratio", description="Ratio for the bottom part of the pectoral fin", default=0.7, min=0, max=2)
-    pPecStiffness = FloatProperty(name="Pec Fin Stiffness", description="Pectoral fin stiffness, with 1.0 being very stiff", default=0.7, min=0, max=2)
-    pHTransTime = FloatProperty(name="Hover Transition Time", description="Speed of transition between swim and hover in seconds", default=0.5, min=0, max=2)
-    pSTransTime = FloatProperty(name="Swim Transition Time", description="Speed of transition between hover and swim in seconds", default=0.2, min=0, max=2)
-    pPecOffset = FloatProperty(name="Pectoral Offset", description="Adjustment to allow for different rest pose angles of the fins", default=20.0, min=-90.0, max=90.0)
-    pHoverDist = FloatProperty(name="Hover Distance", description="Distance from Target to begin Hover in lengths of the target box. A value of 0 will disable hovering, and the action will be similar to the shark rig.", default=1.0, min=-1.0, max=10.0)
-    pHoverTailFrc = FloatProperty(name="Hover Tail Fraction", description="During Hover, the amount of swimming tail movement to retain. 1.0 is full movment, 0 is none", default=0.2, min=0.0, max=5.0)
-    pHoverMaxForce = FloatProperty(name="Hover Max Force", description="The maximum force the fins can apply in Hover Mode. 1.0 is quite fast", default=0.2, min=0.0, max=10.0)
-    pHoverDerate = FloatProperty(name="Hover Derate", description="In hover, the fish can't go backwards or sideways as fast. This parameter determines how much slower. 1.0 is the same.", default=0.2, min=-0.0, max=1.0)
-    pHoverTilt = FloatProperty(name="Hover Tilt", description="The amount of forward/backward tilt in hover as the fish powers forward and backward. in Degrees and based on Max Hover Force", default=4.0, min=-0.0, max=40.0)
-    pPecDuration = FloatProperty(name="Pec Duration", description="The amount of hovering the fish can do before a rest. Duration in frames", default=50.0, min=-5.0)
-    pPecDuty = FloatProperty(name="Pec Duty Cycle", description="The amount of rest time compared to active time. 1.0 is 50/50, 0.0 is no rest", default=0.8, min=0.0)
-    pPecTransition = FloatProperty(name="Pec Transition to rest speed", description="The speed that the pecs change between rest and flap - 1 is instant, 0.05 is fairly slow", default=0.05, min=0.0, max=1.0)
-    pHoverTwitch = FloatProperty(name="Hover Twitch", description="The size of twitching while in hover mode in degrees", default=4.0, min=0.0, max=60.0)
-    pHoverTwitchTime = FloatProperty(name="Hover Twitch Time", description="The time between twitching while in hover mode in frames", default=40.0, min=0.0)
-    pPecSynch = BoolProperty(name="Pec Synch", description="If true then fins beat together, otherwise fins act out of phase", default=False)
+    pMaxPecFreq : FloatProperty(name="Pectoral Stroke Period", description="Maximum frequency of pectoral fin movement in frames per cycle", default=15.0, min=0)
+    pMaxPecAngle : FloatProperty(name="Max Pec Fin Angle", description="Max Pectoral Fin Angle", default=20.0, min=0, max=80)
+    pPecPhase : FloatProperty(name="Pec Fin Tip Phase", description="How far the fin tip lags behind the main movement in degrees", default=90.0, min=0, max=180)
+    pPecStubRatio : FloatProperty(name="Pectoral Stub Ratio", description="Ratio for the bottom part of the pectoral fin", default=0.7, min=0, max=2)
+    pPecStiffness : FloatProperty(name="Pec Fin Stiffness", description="Pectoral fin stiffness, with 1.0 being very stiff", default=0.7, min=0, max=2)
+    pHTransTime : FloatProperty(name="Hover Transition Time", description="Speed of transition between swim and hover in seconds", default=0.5, min=0, max=2)
+    pSTransTime : FloatProperty(name="Swim Transition Time", description="Speed of transition between hover and swim in seconds", default=0.2, min=0, max=2)
+    pPecOffset : FloatProperty(name="Pectoral Offset", description="Adjustment to allow for different rest pose angles of the fins", default=20.0, min=-90.0, max=90.0)
+    pHoverDist : FloatProperty(name="Hover Distance", description="Distance from Target to begin Hover in lengths of the target box. A value of 0 will disable hovering, and the action will be similar to the shark rig.", default=1.0, min=-1.0, max=10.0)
+    pHoverTailFrc : FloatProperty(name="Hover Tail Fraction", description="During Hover, the amount of swimming tail movement to retain. 1.0 is full movment, 0 is none", default=0.2, min=0.0, max=5.0)
+    pHoverMaxForce : FloatProperty(name="Hover Max Force", description="The maximum force the fins can apply in Hover Mode. 1.0 is quite fast", default=0.2, min=0.0, max=10.0)
+    pHoverDerate : FloatProperty(name="Hover Derate", description="In hover, the fish can't go backwards or sideways as fast. This parameter determines how much slower. 1.0 is the same.", default=0.2, min=-0.0, max=1.0)
+    pHoverTilt : FloatProperty(name="Hover Tilt", description="The amount of forward/backward tilt in hover as the fish powers forward and backward. in Degrees and based on Max Hover Force", default=4.0, min=-0.0, max=40.0)
+    pPecDuration : FloatProperty(name="Pec Duration", description="The amount of hovering the fish can do before a rest. Duration in frames", default=50.0, min=-5.0)
+    pPecDuty : FloatProperty(name="Pec Duty Cycle", description="The amount of rest time compared to active time. 1.0 is 50/50, 0.0 is no rest", default=0.8, min=0.0)
+    pPecTransition : FloatProperty(name="Pec Transition to rest speed", description="The speed that the pecs change between rest and flap - 1 is instant, 0.05 is fairly slow", default=0.05, min=0.0, max=1.0)
+    pHoverTwitch : FloatProperty(name="Hover Twitch", description="The size of twitching while in hover mode in degrees", default=4.0, min=0.0, max=60.0)
+    pHoverTwitchTime : FloatProperty(name="Hover Twitch Time", description="The time between twitching while in hover mode in frames", default=40.0, min=0.0)
+    pPecSynch : BoolProperty(name="Pec Synch", description="If true then fins beat together, otherwise fins act out of phase", default=False)
     
 class ARMATURE_OT_FSimulate(bpy.types.Operator):
     """Simulate all armatures with a similar name to selected"""
@@ -188,7 +188,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
     #Set Effort and Direction properties to try and reach the target.
     def Target(self, TargetRig, TargetProxy, pFS):
 
-        RigDirn = mathutils.Vector((0,-1,0)) * TargetRig.matrix_world.inverted()
+        RigDirn = mathutils.Vector((0,-1,0)) @ TargetRig.matrix_world.inverted()
         #print("RigDirn: ", RigDirn)
         
         #distance to target
@@ -237,7 +237,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         pFS.sVelocity[2] += -(pFS.pDrag * pFS.sVelocity[2] * math.fabs(pFS.sVelocity[2])) / pFS.pMass
         # print("Velocity", pFS.sVelocity,pFS.pDrag,pFS.pMass)
         #print("Fwd, Drag: ", ForwardForce, DragForce)
-        TargetRig.location += pFS.sVelocity * TargetRig.matrix_world.inverted()
+        TargetRig.location += pFS.sVelocity @ TargetRig.matrix_world.inverted()
         TargetRig.keyframe_insert(data_path='location',  frame=(nFrame))
         
         #Let's be simplistic - just rotate object based on angluar force
@@ -254,7 +254,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
     #Handle the object movement for hovering
     def ObjectMovmentHover(self, TargetRig, nFrame, TargetProxy, pFS):
         # print("MovementHover")
-        RigForce = self.sHoverMode * pFS.pPecEffortGain * (TargetProxy.matrix_world.to_translation() - TargetRig.location) * TargetRig.matrix_world
+        RigForce = self.sHoverMode * pFS.pPecEffortGain * (TargetProxy.matrix_world.to_translation() - TargetRig.location) @ TargetRig.matrix_world
         
         #Limit the force available
         xHoverMaxForce = pFS.pHoverMaxForce * (1-self.sRestAmount*0.6)
@@ -269,13 +269,13 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         pFS.sVelocity[0] += (RigForce[0] - pFS.pDrag * pFS.sVelocity[0] * math.fabs(pFS.sVelocity[0])) / pFS.pMass
         pFS.sVelocity[1] += (RigForce[1] - pFS.pDrag * pFS.sVelocity[1] * math.fabs(pFS.sVelocity[1])) / pFS.pMass
         pFS.sVelocity[2] += (RigForce[2] - pFS.pDrag * pFS.sVelocity[2] * math.fabs(pFS.sVelocity[2])) / pFS.pMass
-        TargetRig.location += pFS.sVelocity * TargetRig.matrix_world.inverted()
+        TargetRig.location += pFS.sVelocity @ TargetRig.matrix_world.inverted()
         TargetRig.keyframe_insert(data_path='location',  frame=(nFrame))
         # print("sVelocity", pFS.sVelocity)
         
         #Rotate model direction to match target
         # TargetRig.rotation_mode = 'QUATERNION'
-        xTargetQuat = TargetProxy.matrix_world.to_quaternion() * mathutils.Quaternion((0,0,1),math.radians(self.sStartAngle))
+        xTargetQuat = TargetProxy.matrix_world.to_quaternion() @ mathutils.Quaternion((0,0,1),math.radians(self.sStartAngle))
         xRigQuat = TargetRig.rotation_euler.to_quaternion()
         xRigQuat = xRigQuat.slerp(xTargetQuat,pFS.pPecTurnAssist/100.0)
         TargetRig.rotation_euler = xRigQuat.to_euler('XYZ', TargetRig.rotation_euler)
@@ -293,7 +293,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sRoot.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         
         #Get left or right turn
-        xTurnQuat = TargetRig.rotation_quaternion * TargetProxy.matrix_world.to_quaternion().inverted()
+        xTurnQuat = TargetRig.rotation_quaternion @ TargetProxy.matrix_world.to_quaternion().inverted()
         self.sHoverTurn = math.degrees(xTurnQuat.to_euler()[2])
         # print("TurnQuat:", self.sHoverTurn)
         
@@ -410,9 +410,9 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         # print("HoverMode: ", self.sHoverMode)
         yAng = mathutils.Quaternion((0.0, 1.0, 0.0), yPecAngle)
         # yAng = mathutils.Quaternion((0.0, 1.0, 0.0), 0)
-        xAng = yAng * mathutils.Quaternion((1.0, 0.0, 0.0), -xPecAngle)
+        xAng = yAng @ mathutils.Quaternion((1.0, 0.0, 0.0), -xPecAngle)
         xAng = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
-        self.sPecFinPalmL.rotation_quaternion = xAng * mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
+        self.sPecFinPalmL.rotation_quaternion = xAng @ mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
         self.sPecFinPalmL.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         # print("Palm Animate: ", nFrame)
 
@@ -431,16 +431,16 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #If fins are opposing
         if not pFS.pPecSynch:
             yAng = mathutils.Quaternion((0.0, 1.0, 0.0), yPecAngle)
-            xAng = yAng * mathutils.Quaternion((1.0, 0.0, 0.0), xPecAngle)
+            xAng = yAng @ mathutils.Quaternion((1.0, 0.0, 0.0), xPecAngle)
             xAng = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
-            self.sPecFinPalmR.rotation_quaternion = xAng * mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
+            self.sPecFinPalmR.rotation_quaternion = xAng @ mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
             self.sPecFinTopR.scale[1] = 1/self.sPec_scale
             self.sPecFinBottomR.scale[1] = 1 - (1 - 1/self.sPec_scale) * pFS.pPecStubRatio
         else:
             yAng = mathutils.Quaternion((0.0, 1.0, 0.0), -yPecAngle)
-            xAng = yAng * mathutils.Quaternion((1.0, 0.0, 0.0), -xPecAngle)
+            xAng = yAng @ mathutils.Quaternion((1.0, 0.0, 0.0), -xPecAngle)
             xAng = xAng.slerp(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(pFS.pPecOffset)), xRestAmount)
-            self.sPecFinPalmR.rotation_quaternion = xAng * mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
+            self.sPecFinPalmR.rotation_quaternion = xAng @ mathutils.Quaternion((1.0, 0.0, 0.0), SideFinRot)
             self.sPecFinTopR.scale[1] = self.sPec_scale
             self.sPecFinBottomR.scale[1] = 1 - (1 - self.sPec_scale) * pFS.pPecStubRatio
         self.sPecFinPalmR.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
@@ -519,7 +519,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sSpine_master.rotation_quaternion = mathutils.Quaternion((0.0, 0.0, 1.0), xTailAngle)
         self.sSpine_master.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
         ChestRot = mathutils.Quaternion((0.0, 0.0, 1.0), -xTailAngle * pFS.pChestRatio)# - math.radians(pFS.sTailAngleOffset))
-        self.sChest.rotation_quaternion = ChestRot * mathutils.Quaternion((1.0, 0.0, 0.0), -math.fabs(math.radians(pFS.sTailAngleOffset))*pFS.pChestRaise * (1.0 - self.sHoverMode))
+        self.sChest.rotation_quaternion = ChestRot @ mathutils.Quaternion((1.0, 0.0, 0.0), -math.fabs(math.radians(pFS.sTailAngleOffset))*pFS.pChestRaise * (1.0 - self.sHoverMode))
         #print("Torso:", pFS.sTailAngleOffset)
         self.sTorso.rotation_quaternion = mathutils.Quaternion((0.0, 1.0, 0.0), -math.radians(pFS.sTailAngleOffset)*pFS.pLeanIntoTurn * (1.0 - self.sHoverMode))
         self.sChest.keyframe_insert(data_path='rotation_quaternion',  frame=(nFrame))
@@ -633,7 +633,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         scene.frame_set(sFPM.fsim_start_frame)
         self.BoneMovement(context) 
         wm = context.window_manager
-        self._timer = wm.event_timer_add(0.001, context.window)
+        self._timer = wm.event_timer_add(0.001, window=context.window)
         wm.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
@@ -642,16 +642,33 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         wm.event_timer_remove(self._timer)
 
 
+#Register
+        
+classes = (
+    FSimProps,
+    ARMATURE_OT_FSimulate,
+)
 
 def registerTypes():
-    bpy.utils.register_class(FSimProps)
+    from bpy.utils import register_class
+
+    # Classes.
+    for cls in classes:
+        register_class(cls)
+    # bpy.utils.register_class(FSimProps)
     bpy.types.Scene.FSimProps = bpy.props.PointerProperty(type=FSimProps)
-    bpy.utils.register_class(ARMATURE_OT_FSimulate)
+    # bpy.utils.register_class(ARMATURE_OT_FSimulate)
 
 def unregisterTypes():
+    from bpy.utils import unregister_class
+
     del bpy.types.Scene.FSimProps
-    bpy.utils.unregister_class(FSimProps)
-    bpy.utils.unregister_class(ARMATURE_OT_FSimulate)
+
+    # Classes.
+    for cls in classes:
+        unregister_class(cls)
+    # bpy.utils.unregister_class(FSimProps)
+    # bpy.utils.unregister_class(ARMATURE_OT_FSimulate)
 
 
 if __name__ == "__main__":
