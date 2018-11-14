@@ -218,7 +218,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
 
     
 
-    def CopyChildren(self, scene, src_obj, new_obj):
+    def CopyChildren(self, context, src_obj, new_obj):
         for childObj in src_obj.children:
             # print("Copying child: ", childObj.name)
             new_child = childObj.copy()
@@ -227,8 +227,8 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             new_child.location = childObj.location - src_obj.location
             new_child.parent = new_obj
             new_child.matrix_parent_inverse = childObj.matrix_parent_inverse
-            scene.objects.link(new_child)
-            new_child.select = True
+            context.collection.objects.link(new_child)
+            new_child.select_set(True)
             for mod in new_child.modifiers:
                 if mod.type == "ARMATURE":
                     mod.object = new_obj
@@ -241,7 +241,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         src_obj = context.object
         if src_obj.type != 'ARMATURE':
             return {'CANCELLED'}
-        src_obj.select = False
+        src_obj.select_set(True)
         
         #make a list of armatures
         armatures = {}
@@ -276,16 +276,19 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         new_obj = src_obj.copy()
                         new_obj.data = src_obj.data.copy()
                         # new_obj.animation_data_clear()
-                        scene.objects.link(new_obj)
+                        context.collection.objects.link(new_obj)
                         
                         #Unlink from original action
                         new_obj.animation_data.action = None
                         
+                        #2.8 Issue Workout how to update drivers
                         #Update drivers with new rig id
                         for dr in new_obj.animation_data.drivers:                            
                             for v1 in dr.driver.variables:
-                                print("ID: ", v1.targets[0].id)
-                                v1.targets[0].id = new_obj
+                                print("ID1: ", v1.targets[0].id_type, v1.targets[0].id)
+                                if v1.targets[0].id_type == 'OBJECT':
+                                    print("Update")
+                                    v1.targets[0].id = new_obj
                                 
                         new_obj.location = obj.matrix_world.to_translation()
                         new_obj.rotation_euler = obj.rotation_euler
@@ -293,13 +296,13 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         new_root = new_obj.pose.bones.get('root')
                         new_root['TargetProxy'] = obj.name
                         new_root.scale = (new_root.scale.x * obj.scale.x, new_root.scale.y * obj.scale.y, new_root.scale.z * obj.scale.z)
-                        scene.objects.active = new_obj
-                        new_obj.select = True
-                        src_obj.select = False
+                        context.view_layer.objects.active = new_obj
+                        new_obj.select_set(True)
+                        src_obj.select_set(False)
                         
                         #if 'CopyMesh' is selected duplicate the dependents and re-link
                         if scene.FSimMainProps.fsim_copymesh:
-                            self.CopyChildren(scene, src_obj, new_obj)
+                            self.CopyChildren(context, src_obj, new_obj)
 
                 #If there's already a matching rig, then just update it
                 elif obj["FSim"][-3:] == src_obj.name[:3]:
@@ -317,16 +320,16 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         
                         #if no children, and the 'copymesh' flag set, then copy the associated meshes
                         if scene.FSimMainProps.fsim_copymesh and len(TargRig.children) < 1:
-                            self.CopyChildren(scene, src_obj, TargRig)
+                            self.CopyChildren(context, src_obj, TargRig)
                         
                         #Leave the just generated objects selected
-                        scene.objects.active = TargRig
-                        TargRig.select = True
-                        src_obj.select = False
+                        # scene.objects.active = TargRig
+                        TargRig.select_set(True)
+                        src_obj.select_set(False)
                         for childObj in TargRig.children:
-                            childObj.select = True
+                            childObj.select_set(True)
                         for childObj in src_obj.children:
-                            childObj.select = False
+                            childObj.select_set(True)
 
                         # #Animate
                         # if scene.FSimMainProps.fsim_multisim and TargRig.name != src_obj.name:
@@ -411,6 +414,7 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "FishSim"
+    bl_options = {'DEFAULT_CLOSED'}
     #bl_context = "objectmode"
     
     @classmethod
@@ -472,6 +476,7 @@ class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "FishSim"
+    bl_options = {'DEFAULT_CLOSED'}
     #bl_context = "objectmode"
     
     @classmethod
@@ -496,20 +501,17 @@ class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
         # row.operator(AddPresetFSim.bl_idname, text="", icon='ZOOMOUT').remove_active = True        
         
         pFS = context.scene.FSimProps
-        box = layout.box()
         layout.label(text="Main Pec Parameters")
         layout.prop(pFS, "pPecEffortGain")
         layout.prop(pFS, "pPecTurnAssist")
         layout.prop(pFS, "pMaxPecFreq")
         layout.prop(pFS, "pMaxPecAngle")
-        box = layout.box()
         layout.label(text="Pec Fin Tuning")
         layout.prop(pFS, "pPecPhase")
         layout.prop(pFS, "pPecStubRatio")
         layout.prop(pFS, "pPecStiffness")
         layout.prop(pFS, "pPecOffset")
         layout.prop(pFS, "pPecTransition")
-        box = layout.box()
         layout.label(text="Hover Mode Params")
         layout.prop(pFS, "pHoverDist")
         layout.prop(pFS, "pHTransTime")
@@ -518,7 +520,6 @@ class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
         layout.prop(pFS, "pHoverMaxForce")
         layout.prop(pFS, "pHoverDerate")
         layout.prop(pFS, "pHoverTilt")
-        box = layout.box()
         layout.label(text="Variation Tuning")
         layout.prop(pFS, "pPecDuration")
         layout.prop(pFS, "pPecDuty")
