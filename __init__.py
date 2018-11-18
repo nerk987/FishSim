@@ -98,7 +98,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
 
     def execute(self, context):
         #Get the object
-        TargetRig = context.object
+        TargetRig = context.active_object
         
         if TargetRig.type != "ARMATURE":
             print("Not an Armature", context.object.type)
@@ -283,12 +283,14 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                         
                         #2.8 Issue Workout how to update drivers
                         #Update drivers with new rig id
-                        for dr in new_obj.animation_data.drivers:                            
+                        for dr in new_obj.data.animation_data.drivers:                            
                             for v1 in dr.driver.variables:
-                                print("ID1: ", v1.targets[0].id_type, v1.targets[0].id)
-                                if v1.targets[0].id_type == 'OBJECT':
-                                    print("Update")
+                                # print("ID_name: ", v1.targets[0].id.name)
+                                # print("obj_name:", src_obj.name)
+                                if (v1.targets[0].id_type == 'OBJECT') and (v1.targets[0].id.name == src_obj.name):
+                                    # print("Update_p", v1.targets[0].id)
                                     v1.targets[0].id = new_obj
+                                    # print("Update", v1.targets[0].id)
                                 
                         new_obj.location = obj.matrix_world.to_translation()
                         new_obj.rotation_euler = obj.rotation_euler
