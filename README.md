@@ -4,13 +4,13 @@
 V0.3.0 Initial Release for Blender 2.8
 
 Addon Download : [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/v0.3.0/FishSim.zip) 
-
+Eevee Goldfish Model Download : [GoldFish28.zip](https://github.com/nerk987/FishSim/releases/download/v0.3.0/GoldFish28.zip) 
 
 
 ## New in This Release
 v0.3.0
 Initial attempt to convert for Blender 2.8
-(It's a bit of a moving target at the moment, and it hasn't been tested thoroughly)
+(The Blender 2.8 API is a bit of a moving target at the moment, and it hasn't been tested thoroughly)
 
 
 v0.2.1
