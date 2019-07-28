@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.3.0 - Goldfish Version - Blender 2.8
+# version comment: V0.3.1 - Goldfish Version - Blender 2.8RC
 
 import bpy
 import mathutils,  math, os
@@ -194,8 +194,10 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #distance to target
         if TargetProxy != None:
             TargetDirn = (TargetProxy.matrix_world.to_translation() - TargetRig.location)
+            # print("TargetDirn1: ", TargetDirn)
         else:
             TargetDirn = mathutils.Vector((0,-10,0))
+            # print("TargetDirn2: ", TargetDirn)
         DifDot = TargetDirn.dot(RigDirn)
         
         #horizontal angle to target - limit max turning effort at 90 deg
@@ -310,6 +312,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
         #Get the current Target Rig
         # try:
+        # print("nArmature, sAmartures: ", self.nArmature, self.sArmatures)
         TargetRig = scene.objects.get(self.sArmatures[self.nArmature])
         # except IndexError:
             # TargetRig = None
@@ -320,11 +323,16 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sTorso = TargetRig.pose.bones.get("torso")
         self.sSpine_master = TargetRig.pose.bones.get("spine_master")
         self.sBack_fin1 = TargetRig.pose.bones.get("back_fin_masterBk.001")
+        if self.sBack_fin1 is None:
+            self.sBack_fin1 = TargetRig.pose.bones.get("back_fin.T.Bk_master")
         self.sBack_fin2 = TargetRig.pose.bones.get("back_fin_masterBk")
+        if self.sBack_fin2 is None:
+            self.sBack_fin2 = TargetRig.pose.bones.get("back_fin.B.Bk_master")
         self.sBack_fin_middle = TargetRig.pose.bones.get("DEF-back_fin.T.001.Bk")
         self.sChest = TargetRig.pose.bones.get("chest")
         self.sSideFinL = TargetRig.pose.bones.get("side_fin.L")
         self.sSideFinR = TargetRig.pose.bones.get("side_fin.R")
+        # print("Shark Bone Types:", self.sTorso, self.sChest, self.sBack_fin1, self.sBack_fin2)
         if (self.sSpine_master is None) or (self.sTorso is None) or (self.sChest is None) or (self.sBack_fin1 is None) or (self.sBack_fin2 is None) or (self.sBack_fin_middle is None) or (self.sSideFinL is None) or (self.sSideFinR is None):
             self.report({'ERROR'}, "Sorry, this addon needs a Rigify rig generated from a Shark Metarig")
             print("Not an Suitable Rigify Armature")
@@ -352,6 +360,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         #Get TargetProxy object details
         try:
             TargetProxyName = self.sRoot["TargetProxy"]
+            # print("TargetProxyName: ", TargetProxyName)
             self.sTargetProxy = bpy.data.objects[TargetProxyName]
         except:
             self.sTargetProxy = None
@@ -368,7 +377,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         
         #record to previous tail position
         context.scene.frame_set(startFrame)
-        context.scene.update()
+        # context.scene.update()
         self.SetInitialKeyframe(TargetRig, startFrame)
         
         #randomise parameters
@@ -457,7 +466,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         endFrame = pFSM.fsim_end_frame
         
         nFrame = scene.frame_current
-        print("nFrame: ", nFrame)
+        # print("nFrame: ", nFrame)
         
         
         #Get the effort and direction change to head toward the target

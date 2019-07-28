@@ -1,13 +1,16 @@
 # FishSim - Goldfish 2.8 Version
 
 #### Fish Swimming Simulation   
-V0.3.0 Initial Release for Blender 2.8
+V0.3.1 Release for Blender 2.8 Official
 
-Addon Download : [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/v0.3.0/FishSim.zip) 
+Addon Download : [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/v0.3.1/FishSim.zip) 
 Eevee Goldfish Model Download : [GoldFish28.zip](https://github.com/nerk987/FishSim/releases/download/v0.3.0/GoldFish28.zip) 
 
 
 ## New in This Release
+v0.3.1
+Release for Blender 2.8 Official - a few API changes and adapting to a few bone name changes in Rigify
+
 v0.3.0
 Initial attempt to convert for Blender 2.8
 (The Blender 2.8 API is a bit of a moving target at the moment, and it hasn't been tested thoroughly)

@@ -19,12 +19,12 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.3.0 - Goldfish Version - Blender 2.8
+# version comment: V0.3.1 - Goldfish Version - Blender 2.8 RC
 
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 3, 0),
+    "version": (0, 3, 1),
     "blender": (2, 80, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
@@ -265,7 +265,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
                 
                 #Go back to the first frame to make sure the rigs are placed correctly
                 scene.frame_set(scene.FSimMainProps.fsim_start_frame)
-                scene.update()
+                # scene.update()
                 
                 #if a rig hasn't already been paired with this target, and it's the right target type for this rig, then add a duplicated rig at this location if 'CopyRigs' is selected
                 if (obj.name not in armatures) and (obj["FSim"][-3:] == src_obj.name[:3]):
