@@ -339,10 +339,18 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
             return 0,0
             
         # Pectoral fins if they exist
-        self.sPecFinTopL = TargetRig.pose.bones.get("t_master.L")
-        self.sPecFinTopR = TargetRig.pose.bones.get("t_master.R")
-        self.sPecFinBottomL = TargetRig.pose.bones.get("b_master.L")
-        self.sPecFinBottomR = TargetRig.pose.bones.get("b_master.R")
+        self.sPecFinTopL = TargetRig.pose.bones.get("tpec_master.L")
+        if self.sPecFinTopL is None:
+            self.sPecFinTopL = TargetRig.pose.bones.get("t_master.L")
+        self.sPecFinTopR = TargetRig.pose.bones.get("tpec_master.R")
+        if self.sPecFinTopR is None:
+            self.sPecFinTopR = TargetRig.pose.bones.get("t_master.R")
+        self.sPecFinBottomL = TargetRig.pose.bones.get("bpec_master.L")
+        if self.sPecFinBottomL is None:
+            self.sPecFinBottomL = TargetRig.pose.bones.get("b_master.L")
+        self.sPecFinBottomR = TargetRig.pose.bones.get("bpec_master.R")
+        if self.sPecFinBottomR is None:
+            self.sPecFinBottomR = TargetRig.pose.bones.get("b_master.R")
         self.sPecFinPalmL = TargetRig.pose.bones.get("pec_palm.L")
         self.sPecFinPalmR = TargetRig.pose.bones.get("pec_palm.R")
         if (self.sPecFinTopL is None) or (self.sPecFinTopR is None) or (self.sPecFinBottomL is None) or (self.sPecFinBottomR is None) or (self.sPecFinPalmL is None) or (self.sPecFinPalmR is None):
