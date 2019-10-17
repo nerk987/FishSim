@@ -21,7 +21,7 @@
 # by the Rigify add-on and is disabled unless Rigify is enabled.
 #########
 
-# version comment: V0.2.0 master branch - Goldfish Version
+# version comment: V0.3.2 - Goldfish Version - Blender 2.81
 
 import os
 from string import capwords

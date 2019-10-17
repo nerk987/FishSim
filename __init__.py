@@ -19,13 +19,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.3.1 - Goldfish Version - Blender 2.8 RC
+# version comment: V0.3.2 - Goldfish Version - Blender 2.81
 
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 3, 1),
-    "blender": (2, 80, 0),
+    "version": (0, 3, 2),
+    "blender": (2, 81, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",

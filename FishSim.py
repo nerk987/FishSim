@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.3.1 - Goldfish Version - Blender 2.8RC
+# version comment: V0.3.2 - Goldfish Version - Blender 2.81
 
 import bpy
 import mathutils,  math, os
@@ -322,6 +322,8 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sRoot = TargetRig.pose.bones.get("root")
         self.sTorso = TargetRig.pose.bones.get("torso")
         self.sSpine_master = TargetRig.pose.bones.get("spine_master")
+        if self.sSpine_master is None:
+            self.sSpine_master = TargetRig.pose.bones.get("spine_master.002")
         self.sBack_fin1 = TargetRig.pose.bones.get("back_fin_masterBk.001")
         if self.sBack_fin1 is None:
             self.sBack_fin1 = TargetRig.pose.bones.get("back_fin.T.Bk_master")
@@ -332,7 +334,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         self.sChest = TargetRig.pose.bones.get("chest")
         self.sSideFinL = TargetRig.pose.bones.get("side_fin.L")
         self.sSideFinR = TargetRig.pose.bones.get("side_fin.R")
-        # print("Shark Bone Types:", self.sTorso, self.sChest, self.sBack_fin1, self.sBack_fin2)
+        print("Shark Bone Types:", self.sTorso, self.sChest, self.sBack_fin1, self.sBack_fin2)
         if (self.sSpine_master is None) or (self.sTorso is None) or (self.sChest is None) or (self.sBack_fin1 is None) or (self.sBack_fin2 is None) or (self.sBack_fin_middle is None) or (self.sSideFinL is None) or (self.sSideFinR is None):
             self.report({'ERROR'}, "Sorry, this addon needs a Rigify rig generated from a Shark Metarig")
             print("Not an Suitable Rigify Armature")
@@ -373,6 +375,7 @@ class ARMATURE_OT_FSimulate(bpy.types.Operator):
         except:
             self.sTargetProxy = None
 
+        print("TargetProxyName: ", self.sTargetProxy.name)
         #Go back to the start before removing keyframes to remember starting point
         context.scene.frame_set(startFrame)
        
