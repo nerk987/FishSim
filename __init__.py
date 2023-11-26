@@ -19,13 +19,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V0.3.2 - Goldfish Version - Blender 2.81
+# version comment: V4.00.0 - Goldfish Version - Blender 4.00
 
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (0, 3, 2),
-    "blender": (2, 81, 0),
+    "version": (4, 00, 0),
+    "blender": (4, 00, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",
@@ -54,7 +54,7 @@ from bl_operators.presets import AddPresetBase
 # print(sys.modules[bpy.types.DATA_PT_rigify_buttons.__module__].__file__)    
 
 def add_preset_files():
-    presets   = bpy.utils.user_resource('SCRIPTS', "presets")
+    presets   = bpy.utils.user_resource('SCRIPTS', path="presets")
     mypresets = os.path.join(presets, "operator\\fishsim")
     if not os.path.exists(mypresets):
         os.makedirs(mypresets)    
@@ -122,9 +122,9 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
         bound_box.name = TargetRoot["TargetProxy"]
         bound_box.display_type = 'WIRE'
         bound_box.hide_render = True
-        bound_box.cycles_visibility.camera = False
-        bound_box.cycles_visibility.diffuse = False
-        bound_box.cycles_visibility.shadow = False
+        bound_box.visible_camera = False
+        bound_box.visible_diffuse = False
+        bound_box.visible_shadow = False
         bound_box["FSim"] = "FSim_"+TargetRig.name[:3]
         # if "FSim" in bound_box:
             # print("FSim Found")

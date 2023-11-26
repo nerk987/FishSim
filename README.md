@@ -1,13 +1,16 @@
-# FishSim - 2.81 Version
+# FishSim - 4.00 Version
 
 #### Fish Swimming Simulation   
-V0.3.2 Release for Blender 2.81
+V4.00.0 Release for Blender 4.0
 
-Addon Download : [FishSim.zip](https://github.com/nerk987/FishSim/releases/download/v0.3.2/FishSim.zip) 
-Eevee Goldfish Model Download : [GoldFish28.zip](https://github.com/nerk987/FishSim/releases/download/v0.3.0/GoldFish28.zip) 
+Addon Download : [FishSim_4_00_0.zip](https://github.com/nerk987/FishSim/releases/download/v4.00.0/FishSim_4_00_0.zip) 
+Eevee Goldfish Model Download : [GoldFish40.zip](https://github.com/nerk987/FishSim/releases/download/v4.00.0/GoldFish40.zip) 
 
 
 ## New in This Release
+v4.00.0
+Release for Blender 4.00 - new bone collections
+
 v0.3.2
 Release for Blender 2.81 - adapting to a few more bone name changes in Rigify
 
