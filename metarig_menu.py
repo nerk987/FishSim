@@ -21,7 +21,7 @@
 # by the Rigify add-on and is disabled unless Rigify is enabled.
 #########
 
-# version comment: V0.3.2 - Goldfish Version - Blender 2.81
+# version comment: V4.02.0 - Goldfish Version - Blender 4.20 Extensions
 
 import os
 from string import capwords
@@ -31,65 +31,17 @@ import imp
 import importlib
 
 METARIG_DIR = "metarigs"  # Name of the directory where metarigs are kept
-MODULE_NAME = "FishSim"  # Windows/Mac blender is weird, so __package__ doesn't work
-
-# # from __init__
-# class RigifyColorSet(bpy.types.PropertyGroup):
-    # name = bpy.props.StringProperty(name="Color Set", default=" ")
-    # active = bpy.props.FloatVectorProperty(
-                                   # name="object_color",
-                                   # subtype='COLOR',
-                                   # default=(1.0, 1.0, 1.0),
-                                   # min=0.0, max=1.0,
-                                   # description="color picker"
-                                   # )
-    # normal = bpy.props.FloatVectorProperty(
-                                   # name="object_color",
-                                   # subtype='COLOR',
-                                   # default=(1.0, 1.0, 1.0),
-                                   # min=0.0, max=1.0,
-                                   # description="color picker"
-                                   # )
-    # select = bpy.props.FloatVectorProperty(
-                                   # name="object_color",
-                                   # subtype='COLOR',
-                                   # default=(1.0, 1.0, 1.0),
-                                   # min=0.0, max=1.0,
-                                   # description="color picker"
-                                   # )
-    # standard_colors_lock = bpy.props.BoolProperty(default=True)
-
-
-
-# class RigifyArmatureLayer(bpy.types.PropertyGroup):
-
-    # def get_group(self):
-        # if 'group_prop' in self.keys():
-            # return self['group_prop']
-        # else:
-            # return 0
-
-    # def set_group(self, value):
-        # arm = bpy.context.object.data
-        # if value > len(arm.rigify_colors):
-            # self['group_prop'] = len(arm.rigify_colors)
-        # else:
-            # self['group_prop'] = value
-
-    # name = bpy.props.StringProperty(name="Layer Name", default=" ")
-    # row = bpy.props.IntProperty(name="Layer Row", default=1, min=1, max=32, description='UI row for this layer')
-    # set = bpy.props.BoolProperty(name="Selection Set", default=False, description='Add Selection Set for this layer')
-    # group = bpy.props.IntProperty(name="Bone Group", default=0, min=0, max=32,
-                                  # get=get_group, set=set_group, description='Assign Bone Group to this layer')
-
-
+MODULE_NAME = "FishSim"  
 
 def get_metarig_module(metarig_name, path=METARIG_DIR):
     """ Fetches a rig module by name, and returns it.
     """
 
     name = ".%s.%s" % (path, metarig_name)
-    submod = importlib.import_module(name, package=MODULE_NAME)
+#    print("name: ", name, MODULE_NAME)
+#    print("__name__: ", __name__[:__name__.rfind('.')])
+    submod = importlib.import_module(name, package=__name__[:__name__.rfind('.')])
+#    print("Submod: ", submod)
     imp.reload(submod)
     return submod
 
@@ -120,11 +72,12 @@ def get_metarig_list(path, depth=0):
     MODULE_DIR = os.path.dirname(__file__)
     METARIG_DIR_ABS = os.path.join(MODULE_DIR, METARIG_DIR)
     SEARCH_DIR_ABS = os.path.join(METARIG_DIR_ABS, path)
-    # print("Metarig Pathname: ", SEARCH_DIR_ABS)
+#    print("Metarig Pathname: ", SEARCH_DIR_ABS)
     files = os.listdir(SEARCH_DIR_ABS)
     files.sort()
 
     for f in files:
+#        print("File: ", f)
         # Is it a directory?
         complete_path = os.path.join(SEARCH_DIR_ABS, f)
         if os.path.isdir(complete_path) and depth == 0:
@@ -138,18 +91,21 @@ def get_metarig_list(path, depth=0):
             continue
         else:
             module_name = f[:-3]
+#            print("modulename: ", module_name, depth)
             try:
                 if depth == 1:
                     metarigs += [get_metarig_module(module_name, METARIG_DIR + '.' + path)]
                 else:
                     metarigs += [get_metarig_module(module_name, METARIG_DIR)]
             except (ImportError):
+                print("ImportError")
                 pass
 
     if depth == 1:
         return metarigs
 
     metarigs_dict[METARIG_DIR] = metarigs
+#    print("Metarigs: ", metarigs)
     return metarigs_dict
 
 

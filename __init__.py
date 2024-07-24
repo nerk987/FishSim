@@ -19,13 +19,13 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V4.00.0 - Goldfish Version - Blender 4.00
+# version comment: V4.02.0 - Goldfish Version - Blender 4.20 Extensions
 
 bl_info = {
     "name": "FishSim",
     "author": "Ian Huish (nerk)",
-    "version": (4, 00, 0),
-    "blender": (4, 00, 0),
+    "version": (4, 2, 0),
+    "blender": (4, 2, 0),
     "location": "Toolshelf>FishSim",
     "description": "Apply fish swimming action to a Rigify Shark armature",
     "warning": "",
@@ -45,6 +45,7 @@ else:
 
 import bpy
 import mathutils,  math, os
+import addon_utils
 from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, StringProperty
 from random import random
 from bpy.types import Operator, Panel, Menu
@@ -99,6 +100,9 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
     def execute(self, context):
         #Get the object
         TargetRig = context.active_object
+        for mod in addon_utils.modules():
+            if mod.bl_info.get("name") == "FishSim":
+                print("Path: ", os.path.dirname(mod.__file__) + os.sep + "presets")
         
         if TargetRig.type != "ARMATURE":
             print("Not an Armature", context.object.type)
@@ -138,7 +142,10 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
 #UI Panels
 class AMATURE_MT_fsim_presets(Menu):
     bl_label = "FishSim Presets"
-    preset_subdir = "../addons/fishsim/presets"
+#    for mod in addon_utils.modules():
+#        if mod.bl_info.get("name") == "FishSim":
+#            preset_subdir = os.path.dirname(mod.__file__) + os.sep + "presets"
+    preset_subdir = "../../extensions/user_default/FishSim/presets"
     preset_operator = "script.execute_preset"
     COMPAT_ENGINES = {'BLENDER_RENDER', 'CYCLES_RENDER', 'BLENDER_GAME'}
     draw = Menu.draw_preset
@@ -203,7 +210,11 @@ class AddPresetFSim(AddPresetBase, Operator):
         ]
 
     # where to store the preset
-    preset_subdir = "../addons/fishsim/presets"
+#    preset_subdir = "../FishSim/presets"
+    preset_subdir = "../../extensions/user_default/FishSim/presets"
+#    for mod in addon_utils.modules():
+#        if mod.bl_info.get("name") == "FishSim":
+#            preset_subdir = os.path.dirname(mod.__file__) + os.sep + "presets"
     
 
 class ARMATURE_OT_FSim_Run(bpy.types.Operator):

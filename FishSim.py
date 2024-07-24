@@ -19,7 +19,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# version comment: V4.00.0 - Goldfish Version - Blender 4.00
+# version comment: V4.02.0 - Goldfish Version - Blender 4.20 Extensions
 
 import bpy
 import mathutils,  math, os

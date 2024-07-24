@@ -1,0 +1,22 @@
+schema_version = "1.0.0"
+
+id = "FishSim"
+version = "4.2.0"
+name = "FishSim"
+tagline = "Fish Swimming Simulation"
+description = "This addon makes it easy to animate the standard Rigify Shark armature along a custom path. Various fish models are also available on the linked Github page."
+type = "add-on"
+
+
+# List defined by Blender and server, see:
+# https://docs.blender.org/manual/en/4.2/extensions/tags.html
+tags = ["Animation", "Simulation"]
+
+blender_version_min = "4.2.0"
+
+maintainer = "Nerk <nerk987@gmail.com"
+# License conforming to https://spdx.org/is suppose to dolicenses/
+# use "SPDX: prefix.
+license = [
+  "SPDX:GPL-2.0-or-later",
+]

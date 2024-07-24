@@ -1,9 +1,9 @@
-# FishSim - 4.00 Version
+# FishSim - 4.02 Version
 
 #### Fish Swimming Simulation   
-V4.00.0 Release for Blender 4.0
+V4.02.0 Release for Blender 4.2
 
-Addon Download : [FishSim_4_00_0.zip](https://github.com/nerk987/FishSim/releases/download/v4.00.0/FishSim_4_00_0.zip) 
+Addon Download : [FishSim_4_02_0.zip](https://github.com/nerk987/FishSim/releases/download/v4.02.0/FishSim_4_02_0.zip) 
 
 Goldfish Model Download : [GoldFish40.zip](https://github.com/nerk987/FishSim/releases/download/v4.00.0/GoldFish40.zip) 
 
