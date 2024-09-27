@@ -45,7 +45,6 @@ else:
 
 import bpy
 import mathutils,  math, os
-import addon_utils
 from bpy.props import FloatProperty, IntProperty, BoolProperty, EnumProperty, StringProperty
 from random import random
 from bpy.types import Operator, Panel, Menu
@@ -54,12 +53,17 @@ from bl_operators.presets import AddPresetBase
 
 # print(sys.modules[bpy.types.DATA_PT_rigify_buttons.__module__].__file__)    
 
-def add_preset_files():
-    presets   = bpy.utils.user_resource('SCRIPTS', path="presets")
-    mypresets = os.path.join(presets, "operator\\fishsim")
-    if not os.path.exists(mypresets):
-        os.makedirs(mypresets)    
-        # print("Presets dir added:", mypresets)
+#Globals
+
+global_preset_subdir = "../../extensions/user_default/FishSim/presets"
+
+
+#def add_preset_files():
+#    presets   = bpy.utils.user_resource('SCRIPTS', path="presets")
+#    mypresets = os.path.join(presets, "operator\\fishsim")
+#    if not os.path.exists(mypresets):
+#        os.makedirs(mypresets)    
+#        # print("Presets dir added:", mypresets)
     # mypath = os.path.join(mypresets, "myfile.xxx")
 
 
@@ -68,8 +72,8 @@ class FSimMainProps(bpy.types.PropertyGroup):
     fsim_start_frame : IntProperty(name="Simulation Start Frame", default=1)  
     fsim_end_frame : IntProperty(name="Simulation End Frame", default=250)  
     fsim_maxnum : IntProperty(name="Maximum number of copies", default=250)  
-    fsim_copyrigs : BoolProperty(name="Distribute multiple copies of the rig", default=False)  
-    fsim_copymesh : BoolProperty(name="Distribute multiple copies of meshes", default=False)  
+    fsim_copyrigs : BoolProperty(name="Distribute multiple copies of the rig", default=True)
+    fsim_copymesh : BoolProperty(name="Distribute multiple copies of meshes", default=True)
     fsim_multisim : BoolProperty(name="Simulate the multiple rigs", default=False)  
     fsim_startangle : FloatProperty(name="Angle to Target", default=0.0)
     
@@ -100,9 +104,6 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
     def execute(self, context):
         #Get the object
         TargetRig = context.active_object
-        for mod in addon_utils.modules():
-            if mod.bl_info.get("name") == "FishSim":
-                print("Path: ", os.path.dirname(mod.__file__) + os.sep + "presets")
         
         if TargetRig.type != "ARMATURE":
             print("Not an Armature", context.object.type)
@@ -142,10 +143,7 @@ class ARMATURE_OT_FSim_Add(bpy.types.Operator):
 #UI Panels
 class AMATURE_MT_fsim_presets(Menu):
     bl_label = "FishSim Presets"
-#    for mod in addon_utils.modules():
-#        if mod.bl_info.get("name") == "FishSim":
-#            preset_subdir = os.path.dirname(mod.__file__) + os.sep + "presets"
-    preset_subdir = "../../extensions/user_default/FishSim/presets"
+    preset_subdir = global_preset_subdir
     preset_operator = "script.execute_preset"
     COMPAT_ENGINES = {'BLENDER_RENDER', 'CYCLES_RENDER', 'BLENDER_GAME'}
     draw = Menu.draw_preset
@@ -210,11 +208,7 @@ class AddPresetFSim(AddPresetBase, Operator):
         ]
 
     # where to store the preset
-#    preset_subdir = "../FishSim/presets"
-    preset_subdir = "../../extensions/user_default/FishSim/presets"
-#    for mod in addon_utils.modules():
-#        if mod.bl_info.get("name") == "FishSim":
-#            preset_subdir = os.path.dirname(mod.__file__) + os.sep + "presets"
+#    preset_subdir = "../../extensions/user_default/FishSim/presets"
     
 
 class ARMATURE_OT_FSim_Run(bpy.types.Operator):
@@ -375,12 +369,82 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
         return {'FINISHED'}
 
         
+class ARMATURE_OT_AddFish(bpy.types.Operator):
+    """Add a rigged fish to the scene"""
+    bl_idname = "armature.addfish"
+    bl_label = "Add Fish"
     
+    FishSelector: bpy.props.EnumProperty(
+        name="Options",
+        description="Choose an option",
+        items=[
+#            ('Cube', "Cube Collection", ""),
+            ('BullShark', "Bull Shark", ""),
+            ('Goldfish', "Goldfish", ""),
+            ('ArcherFish', "Archer Fish", ""),
+        ]
+    )
+    
+    def execute(self, context):
+        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Models/Models.blend")
+        #directory = os.path.dirname(filepath)
+        #filename = os.path.basename(filepath)
+#        collectionname = "Cube"
+        
+        print("Filepath: ", filepath)
+        
+        # Construct the full path to the object
+        #object_path = os.path.join(directory, filename, "Collection", collectionname)
 
-class ARMATURE_PT_FSim(bpy.types.Panel):
+        with bpy.data.libraries.load(filepath, link=False) as (data_from, data_to):
+            data_to.collections = [name for name in data_from.collections if name == self.FishSelector]
+            
+        print("data_to: ", data_to)
+        
+        for coll in data_to.collections:
+            bpy.context.collection.children.link(coll)
+            if coll.name == "BullShark":
+                context.scene.FSimProps.pPower = 20.0   
+                context.scene.FSimProps.pTailFinStiffness = 0.7  
+                context.scene.FSimProps.pMaxSideFinAngle = 3.0
+                bpy.data.texts["rig.shark_ui.py"].as_module()
+            if coll.name == "Goldfish":
+                context.scene.FSimProps.pPower = 1.0
+                context.scene.FSimProps.pTailFinStiffness = 0.4
+                context.scene.FSimProps.pMaxSideFinAngle = 15.0
+                bpy.data.texts["rig.goldfish_ui.py"].as_module()
+            if coll.name == "ArcherFish":
+                context.scene.FSimProps.pPower = 3.0
+                context.scene.FSimProps.pTailFinStiffness = 0.4
+                context.scene.FSimProps.pMaxSideFinAngle = 15.0
+                bpy.data.texts["rig.archer_ui.py"].as_module()
+
+            # fix up link between armature and target if necessary
+            ProxyName = ""
+            RigRootBone = None
+            for ob in coll.objects:
+                if "proxy" in ob.name:
+                    ProxyName = ob.name
+                if ob.type == 'ARMATURE':
+                    try:
+                        RigRootBone = ob.pose.bones['root']
+                    except:
+                        pass
+            if ProxyName != "" and RigRootBone != None:
+                RigRootBone["TargetProxy"] = ProxyName
+                          
+
+        self.report({'INFO'}, f"Selected: {self.FishSelector}")
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+    
+class ARMATURE_PT_FAdd(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
-    bl_label = "FishSim"   
-    bl_idname = "armature.fsim"
+    bl_label = "FishAdd"   
+    bl_idname = "ARMATURE_PT_FAdd"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "FishSim"
@@ -390,6 +454,34 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
+        return True
+#        if context.object != None:
+#            return (context.mode in {'OBJECT', 'POSE'}) and (context.object.type == "ARMATURE")
+#        else:
+#            return False
+
+    def draw(self, context):
+        layout = self.layout
+
+        obj1 = context.object
+        scene = context.scene
+        
+        layout.operator("armature.addfish")
+
+class ARMATURE_PT_FSim(bpy.types.Panel):
+    """Creates a Panel in the Object properties window"""
+    bl_label = "FishSim"   
+    bl_idname = "ARMATURE_PT_FSim"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "FishSim"
+    #bl_context = "objectmode"
+    
+
+
+    @classmethod
+    def poll(cls, context):
+#        return True
         if context.object != None:
             return (context.mode in {'OBJECT', 'POSE'}) and (context.object.type == "ARMATURE")
         else:
@@ -401,19 +493,22 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
         obj1 = context.object
         scene = context.scene
         
+        #layout.operator("armature.addfish")
+        layout.label(text="Simulation")
         # row = layout.row()
-        layout.label(text="Animation Ranges")
+        layout.operator("armature.fsimulate")
+        # row = layout.row()
+        #layout.label(text="Animation Ranges")
         # row = layout.row()
         layout.prop(scene.FSimMainProps, "fsim_start_frame")
         # row = layout.row()
         layout.prop(scene.FSimMainProps, "fsim_end_frame")
         row = layout.row()
+        layout.label(text="Add a Target to an existing rig")
         layout.operator("armature.fsim_add")
-        row = layout.row()
-        layout.operator("armature.fsimulate")
-        row = layout.row()
         # box = layout.box()
         # box.label(text="Multi Sim Options")
+        layout.label(text="Copy Models to multiple targets")
         layout.operator("armature.fsim_run")
         layout.prop(scene.FSimMainProps, "fsim_copyrigs")
         layout.prop(scene.FSimMainProps, "fsim_copymesh")
@@ -423,7 +518,7 @@ class ARMATURE_PT_FSim(bpy.types.Panel):
 class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
     """Creates a Panel in the Tool Panel"""
     bl_label = "Main Simulation Properties"
-    bl_idname = "armature.fsimproppanel"
+    bl_idname = "ARMATURE_PT_FSimPropPanel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "FishSim"
@@ -439,7 +534,7 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
 
     def draw(self, context):
         #Make sure the presets directory exists
-        add_preset_files()
+#        add_preset_files()
         
         layout = self.layout
 
@@ -447,8 +542,8 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
         # row = layout.row()
         row = layout.row()
         row.menu("AMATURE_MT_fsim_presets", text=bpy.types.AMATURE_MT_fsim_presets.bl_label)
-        row.operator(AddPresetFSim.bl_idname, text="", icon='TRIA_UP')
-        row.operator(AddPresetFSim.bl_idname, text="", icon='TRIA_UP').remove_active = True        
+#        row.operator(AddPresetFSim.bl_idname, text="", icon='PLUS')
+#        row.operator(AddPresetFSim.bl_idname, text="", icon='X').remove_active = True        
         
         pFS = context.scene.FSimProps
         # row = layout.row()
@@ -485,7 +580,7 @@ class ARMATURE_PT_FSimPropPanel(bpy.types.Panel):
 class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
     """Creates a Panel in the Tool Panel"""
     bl_label = "Pectoral Fin Properties"
-    bl_idname = "armature.fsimpecpanel"
+    bl_idname = "ARMATURE_PT_FSimPecPanel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "FishSim"
@@ -545,12 +640,14 @@ class ARMATURE_PT_FSimPecPanel(bpy.types.Panel):
 classes = (
     FSimMainProps,
     ARMATURE_OT_FSim_Add,
+    ARMATURE_PT_FAdd,
     ARMATURE_PT_FSim,
     ARMATURE_PT_FSimPropPanel,
     ARMATURE_PT_FSimPecPanel,
     AMATURE_MT_fsim_presets,
     AddPresetFSim,
     ARMATURE_OT_FSim_Run,
+    ARMATURE_OT_AddFish,
 )
 
 def register():

@@ -5,14 +5,12 @@ V4.02.0 Release for Blender 4.2
 
 Addon Download : [FishSim_4_02_0.zip](https://github.com/nerk987/FishSim/releases/download/v4.02.0/FishSim_4_02_0.zip) 
 
-Goldfish Model Download : [GoldFish40.zip](https://github.com/nerk987/FishSim/releases/download/v4.00.0/GoldFish40.zip) 
-
-Bull Shark Model Download : [BullShark40.zip](https://github.com/nerk987/FishSim/releases/download/v4.00.0/BullShark40.zip) 
-
-Archer Fish Model Download : [ArcherFish40.zip](https://github.com/nerk987/FishSim/releases/download/v4.00.0/ArcherFish40.zip) 
-
 
 ## New in This Release
+v4.02.0
+Release for Blender 4.2 and it's associated extensions website
+In this version, the fish models are distributed with the addon, and can be added directly. The models have been extensively re-worked to suit the updated Rigify addon.
+
 v4.00.0
 Release for Blender 4.00 - new bone collections
 
