@@ -229,7 +229,7 @@ class ARMATURE_OT_FSim_Run(bpy.types.Operator):
             new_child = childObj.copy()
             new_child.data = childObj.data.copy()
             new_child.animation_data_clear()
-            new_child.location = childObj.location - src_obj.location
+#            new_child.location = childObj.location - src_obj.location
             new_child.parent = new_obj
             new_child.matrix_parent_inverse = childObj.matrix_parent_inverse
             context.collection.objects.link(new_child)
@@ -428,6 +428,8 @@ class ARMATURE_OT_AddFish(bpy.types.Operator):
                 if ob.type == 'ARMATURE':
                     try:
                         RigRootBone = ob.pose.bones['root']
+                        ob.pose.bones["torso"]["neck_follow"] = 0.25
+                        ob.pose.bones["torso"]["head_follow"] = 0.25
                     except:
                         pass
             if ProxyName != "" and RigRootBone != None:
